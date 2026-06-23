@@ -26,3 +26,32 @@ This document outlines key project-wide development patterns and constraints for
 * **Entity and Repository Changes**: Whenever a new database entity is created or repository queries are updated, you must create or update a corresponding SQL script defining the tables, indices, functions, or procedures.
 * **Granularity**: Create separate SQL script files for each table individually (under the `backend/sql` directory) rather than combining multiple tables into a single script.
 
+---
+
+## 4. Frontend Module Structure & Guidelines
+* **Module-Scoped Directories**: Any module inside `frontend/src/` (such as `company` or any new module) should be organized with at most the following child directories:
+  * `pages/` — contains `.tsx` pages/views for this module.
+  * `services/` — contains API communication and service code specific to this module.
+  * `hooks/` — contains custom React hooks specific to this module.
+  * `components/` — contains components used only within this module.
+  * `types/` — contains TypeScript files for types specific to this module, grouped by purpose (e.g. `api.types.ts`, `model.types.ts`).
+* **Shared / Common Directory (`src/common`)**: Anything shared across multiple modules must be put inside `src/common/`:
+  * Shared API utilities must go in `src/common/services/` (e.g., `src/common/services/api.ts`).
+  * Shared components go in `src/common/components/`.
+  * Shared hooks go in `src/common/hooks/`.
+  * Shared TypeScript types go in `src/common/types/` (e.g., `src/common/types/model.types.ts`).
+* **Type Location Rules**: 
+  * Always define types inside dedicated files within a `types/` directory (either `src/common/types/` or a module-specific `src/<module>/types/`).
+  * **Never** define types directly inside page files, component files, service files, or hook files.
+  * Name files clearly based on purpose (e.g. `model.types.ts`, `api.types.ts`).
+* **Keyboard-First Navigation**:
+  * The entire frontend must be designed for keyboard-only navigation. Mouse interaction is secondary.
+  * Keyboard shortcuts are registered either globally by the Scaffold or dynamically by active page components.
+  * A page can register dynamic shortcuts, which are automatically attached on mount and cleaned up on unmount.
+  * If a dynamic shortcut conflicts with a global shortcut, the global shortcut takes precedence, the dynamic one is discarded, and a warning is printed to the console.
+  * If there are duplicate dynamic shortcuts registered by the active page components, the last registered handler takes precedence.
+  * All registered shortcuts must be dynamically listed in the right shortcut panel.
+* **Adherence**: Adhere strictly to this architectural structure to ensure consistency across the entire frontend application.
+
+
+

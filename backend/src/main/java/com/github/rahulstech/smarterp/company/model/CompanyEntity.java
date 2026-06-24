@@ -32,7 +32,4 @@ public class CompanyEntity extends BaseEntity {
 
     @Column(name = "gst_number", nullable = false)
     private String gstNumber;
-
-    @Column(nullable = false)
-    private Boolean active = true;
 }

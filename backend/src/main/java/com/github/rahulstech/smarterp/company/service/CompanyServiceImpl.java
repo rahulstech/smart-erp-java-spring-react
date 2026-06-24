@@ -30,7 +30,6 @@ public class CompanyServiceImpl implements CompanyService {
     public CompanyResponse createCompany(CreateCompanyRequest request) {
         CompanyEntity entity = companyMapper.toEntity(request);
         entity.setOwnerId(currentUserProvider.getCurrentUserId());
-        entity.setActive(true);
         CompanyEntity saved = companyRepository.saveAndFlush(entity);
         return companyMapper.toResponse(saved);
     }

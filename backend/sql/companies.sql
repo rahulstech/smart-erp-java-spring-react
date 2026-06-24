@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS companies (
     pincode VARCHAR(20) NOT NULL,
     country VARCHAR(100) NOT NULL,
     gst_number VARCHAR(50) NOT NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );

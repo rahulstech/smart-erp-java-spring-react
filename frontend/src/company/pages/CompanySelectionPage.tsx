@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Company } from '../../common/types/model.types';
 import Scaffold from '../../common/components/Scaffold';
@@ -8,29 +8,31 @@ import CompanyPageLeftPanel from '../components/CompanyPageLeftPanel';
 import { useNotification } from '../../common/components/NotificationHost';
 import ContextMenu from '../../common/components/ContextMenu';
 import CompanyDeleteDialog from '../components/CompanyDeleteDialog';
+import LoadingPopup from '../../common/components/LoadingPopup';
+import ErrorRetry from '../../common/components/ErrorRetry';
+
+const columns: string[] = ['ID', 'Name', 'Phone', 'Email', 'Address', 'GST Number'];
 
 interface CompanySelectionMainProps {
+  companiesList: Company[];
   showToast: (message: string) => void;
 }
 
-function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
-  // Fetch companies using the custom hook
-  const { data: companiesList = [], isLoading } = useGetCompanies();
+function CompanySelectionMain({ companiesList, showToast }: CompanySelectionMainProps) {
+  const navigate = useNavigate();
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
 
   const handleSelectCompany = useCallback((company: Company) => {
     showToast(`Selected Company: ${company.name}`);
   }, [showToast]);
 
-  const columns: string[] = ['ID', 'Name', 'Phone', 'Email', 'Address', 'GST Number'];
-
+  
   return (
     <>
       <ErpTable
         columns={columns}
         data={companiesList}
         onRowClick={handleSelectCompany}
-        isLoading={isLoading}
         searchPlaceholder="Search Company (Alt+F)"
         render={(colIndex, company) => {
           if (colIndex === 0) {
@@ -53,7 +55,7 @@ function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
           }
           return '';
         }}
-        contextMenu={(_) => (
+        contextMenu={() => (
           <ContextMenu
             items={[
               { id: 'delete_company', title: 'Delete Company' },
@@ -66,8 +68,8 @@ function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
         onClickContextItem={(itemId, company) => {
           if (itemId === 'delete_company') {
             setCompanyToDelete(company);
-          } else {
-            console.log('Context item clicked:', itemId, company);
+          } else if (itemId === 'alter_company') {
+            navigate(`/edit-company/${company.id}`);
           }
         }}
       />
@@ -81,32 +83,26 @@ function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
 }
 
 export default function CompanySelectionPage() {
-  const navigate = useNavigate();
   const { showToast } = useNotification();
-
-  const shortcuts = useMemo(() => [
-    {
-      combination: 'Alt+Shift+O',
-      label: 'Select Company',
-      handler: () => {
-        navigate('/companies');
-      }
-    },
-    {
-      combination: 'Alt+Shift+N',
-      label: 'Create Company',
-      handler: () => {
-        navigate('/companies/new');
-      }
-    }
-  ], [navigate]);
+  const { data: companiesList = [], isLoading, isError, refetch } = useGetCompanies();
 
   return (
-    <Scaffold
-      title="List of Companies"
-      shortcuts={shortcuts}
-      leftPanel={<CompanyPageLeftPanel />}
-      mainPanel={<CompanySelectionMain showToast={showToast} />}
-    />
+    <>
+      <Scaffold
+        title="List of Companies"
+        leftPanel={<CompanyPageLeftPanel />}
+        onRetry={refetch}
+        mainPanel={
+          isLoading ? ( 
+            <LoadingPopup message="Loading companies" /> 
+          )
+          : isError ? (
+            <ErrorRetry message="Could not load the companies list due to a loading error." />
+          ) : (
+            <CompanySelectionMain companiesList={companiesList} showToast={showToast} />
+          )
+        }
+      />
+    </>
   );
 }

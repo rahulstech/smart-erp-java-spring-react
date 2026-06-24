@@ -13,19 +13,20 @@ export interface ScaffoldProps {
   shortcuts?: KeyboardShortcut[];
   leftPanel?: ReactNode;
   mainPanel?: ReactNode;
+  onRetry?: () => void;
 }
 
 // Popup Component Types
 export interface PopupProps {
-  isOpen: boolean;
   onClose?: () => void;
   title?: string;
   children: ReactNode;
   showBackdrop?: boolean;
   shortcuts?: KeyboardShortcut[];
   className?: string;
-  footerExtra?: ReactNode;
-  showCloseButton?: boolean;
+  footer?: ReactNode;
+  cancelable?: boolean;
+  style?: React.CSSProperties;
 }
 
 // ContextMenu Component Types
@@ -61,9 +62,7 @@ export interface ErpTableProps<T> {
   columns: string[];
   data: T[];
   onRowClick?: (item: T, index: number) => void;
-  isLoading?: boolean;
   emptyContent?: ReactNode;
-  loadingContent?: ReactNode;
   searchPlaceholder?: string;
   searchKeys?: (keyof T)[];
   onFilter?: (item: T) => boolean;
@@ -113,4 +112,14 @@ export interface DialogProps {
   content: ReactNode;
   buttons?: DialogButtonItem[];
   onClickButton?: (buttonId: string) => void;
+}
+
+// LoadingPopup Component Types
+export interface LoadingPopupProps {
+  message: string;
+}
+
+// ErrorRetry Component Types
+export interface ErrorRetryProps {
+  message: string;
 }

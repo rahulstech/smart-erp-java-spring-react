@@ -15,3 +15,13 @@ export const createCompany = async (payload: CompanyFormData): Promise<Company> 
 export const deleteCompany = async (companyId: string): Promise<void> => {
   await api.delete(`/companies/${companyId}`);
 };
+
+export const getCompanyById = async (id: string): Promise<Company> => {
+  const response = await api.get<Company>(`/companies/${id}`);
+  return response.data;
+};
+
+export const updateCompany = async (id: string, payload: CompanyFormData): Promise<Company> => {
+  const response = await api.put<Company>(`/companies/${id}`, payload);
+  return response.data;
+};

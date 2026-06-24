@@ -9,48 +9,58 @@ import { KeyboardShortcut, ScaffoldProps } from '../types/component.types';
 import ShortcutRow from './ShortcutRow';
 import { useShortcuts } from '../hooks/useShortcuts';
 
-export default function Scaffold({ title, shortcuts = [], leftPanel, mainPanel }: ScaffoldProps) {
+// A static, reference-stable EMPTY_SHORTCUTS array is defined outside the component rather than using
+// an inline default parameter `shortcuts = []`. An inline `[]` creates a new array instance on every single render.
+// Since this array is a dependency in useEffect, a new instance would trigger a shortcut state update, leading
+// to an infinite re-render loop when the prop is omitted.
+const EMPTY_SHORTCUTS: KeyboardShortcut[] = [];
+
+export default function Scaffold({ title, shortcuts = EMPTY_SHORTCUTS, leftPanel, mainPanel, onRetry }: ScaffoldProps) {
   const navigate = useNavigate();
-  const { setGlobalShortcuts, setPageShortcuts } = useShortcuts();
+  const { setGlobalShortcuts, registerPageShortcuts, unregisterPageShortcuts } = useShortcuts();
 
   // Statically defined global shortcuts
-  const GLOBAL_SHORTCUTS: KeyboardShortcut[] = useMemo(() => [
-    {
-      combination: 'Alt+Shift+D',
-      label: 'Dashboard',
-      handler: () => {
-        alert('Dashboard shortcut triggered');
+  const GLOBAL_SHORTCUTS: KeyboardShortcut[] = useMemo(() => {
+    const base = [
+      {
+        combination: 'Alt+Shift+D',
+        label: 'Dashboard',
+        handler: () => {
+          alert('Dashboard shortcut triggered');
+        }
+      },
+      {
+        combination: 'Alt+Shift+H',
+        label: 'Home',
+        handler: () => {
+          navigate('/');
+        }
+      },
+      {
+        combination: 'Alt+Shift+B',
+        label: 'Back',
+        handler: () => {
+          navigate(-1);
+        }
+      },
+      {
+        combination: 'Alt+Shift+R',
+        label: 'Reload',
+        handler: () => {
+          onRetry?.();
+        }
+      },
+      {
+        combination: 'Alt+Shift+Q',
+        label: 'Logout',
+        handler: () => {
+          alert('Logout shortcut triggered');
+        }
       }
-    },
-    {
-      combination: 'Alt+Shift+K',
-      label: 'Cmd Palette',
-      handler: () => {
-        alert('Command Palette shortcut triggered');
-      }
-    },
-    {
-      combination: 'Alt+Shift+H',
-      label: 'Home',
-      handler: () => {
-        navigate('/');
-      }
-    },
-    {
-      combination: 'Alt+Shift+B',
-      label: 'Back',
-      handler: () => {
-        navigate(-1);
-      }
-    },
-    {
-      combination: 'Alt+Shift+Q',
-      label: 'Logout',
-      handler: () => {
-        alert('Logout shortcut triggered');
-      }
-    }
-  ], [navigate]);
+    ];
+
+    return base;
+  }, [navigate, onRetry]);
 
   // Register global shortcuts
   useEffect(() => {
@@ -60,9 +70,9 @@ export default function Scaffold({ title, shortcuts = [], leftPanel, mainPanel }
 
   // Register page shortcuts
   useEffect(() => {
-    setPageShortcuts(shortcuts);
-    return () => setPageShortcuts([]);
-  }, [shortcuts, setPageShortcuts]);
+    registerPageShortcuts('scaffold', shortcuts);
+    return () => unregisterPageShortcuts('scaffold');
+  }, [shortcuts, registerPageShortcuts, unregisterPageShortcuts]);
 
   return (
     <div className="erp-layout">

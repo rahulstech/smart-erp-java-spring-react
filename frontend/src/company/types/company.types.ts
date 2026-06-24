@@ -9,3 +9,8 @@ export interface CompanyFormData {
   country: string;
   pincode: string;
 }
+
+export interface CompanyInputProps {
+  onSave: (data: CompanyFormData) => void;
+  initialData?: CompanyFormData;
+}

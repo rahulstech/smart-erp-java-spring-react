@@ -44,12 +44,10 @@ export default function ContextMenu({
 
   return (
     <Popup
-      isOpen={true}
       title={title}
       showBackdrop={false}
       className="context-menu-popup"
-      showCloseButton={false}
-      footerExtra={
+      footer={
         <span style={{ fontWeight: 'bold', color: '#0c326e' }}>↑ ↓ Move</span>
       }
     >

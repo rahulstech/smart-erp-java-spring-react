@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import CompanySelectionPage from './company/pages/CompanySelectionPage'
 import CreateCompanyPage from './company/pages/CreateCompanyPage'
+import EditCompanyPage from './company/pages/EditCompanyPage'
 import NotificationHost from './common/components/NotificationHost'
 import ShortcutProvider from './common/components/ShortcutProvider'
 
@@ -12,6 +13,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<CompanySelectionPage />} />
             <Route path="/create-company" element={<CreateCompanyPage />} />
+            <Route path="/edit-company/:company_id" element={<EditCompanyPage />} />
           </Routes>
         </div>
       </ShortcutProvider>

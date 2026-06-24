@@ -31,13 +31,13 @@ export default function Dialog({
       }));
   }, [buttons, onClickButton, onClose]);
 
+  if (!isOpen) return null;
+
   return (
     <Popup
-      isOpen={isOpen}
       onClose={onClose}
       shortcuts={shortcuts}
       className="erp-dialog-popup"
-      showCloseButton={false}
       showBackdrop={true}
     >
       <div className="erp-dialog-container">

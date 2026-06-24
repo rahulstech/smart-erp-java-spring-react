@@ -5,9 +5,7 @@ export default function ErpTable<T>({
   columns,
   data,
   onRowClick,
-  isLoading = false,
   emptyContent,
-  loadingContent,
   searchPlaceholder = 'Search (Alt+F)',
   searchKeys,
   onFilter = () => true,
@@ -122,16 +120,7 @@ export default function ErpTable<T>({
 
       {/* Reusable Table Container */}
       <div className="erp-table-container">
-        {isLoading && (
-          loadingContent || (
-            <div className="flex flex-col items-center justify-center p-20 gap-3">
-              <div className="w-8 h-8 border-4 border-zinc-700 border-t-zinc-200 rounded-full animate-spin"></div>
-              <p className="text-sm text-zinc-500 font-medium">Loading rows...</p>
-            </div>
-          )
-        )}
-
-        {!isLoading && filteredData.length === 0 && (
+        {filteredData.length === 0 && (
           emptyContent || (
             <div className="flex flex-col items-center justify-center p-20 text-center">
               <p className="text-sm text-zinc-500 font-bold">No records found</p>
@@ -139,7 +128,7 @@ export default function ErpTable<T>({
           )
         )}
 
-        {!isLoading && filteredData.length > 0 && (
+        {filteredData.length > 0 && (
           <table className="erp-table">
             <thead>
               <tr>

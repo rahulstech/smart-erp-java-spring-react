@@ -61,7 +61,12 @@ function deduplicateShortcuts(shortcuts: KeyboardShortcut[]): KeyboardShortcut[]
 
 export default function ShortcutProvider({ children }: { children: React.ReactNode }) {
   const [globalShortcuts, setGlobalShortcutsState] = useState<KeyboardShortcut[]>([]);
-  const [pageShortcuts, setPageShortcutsState] = useState<KeyboardShortcut[]>([]);
+  // A Map (pageShortcutsMap) is used here instead of a simple flat array because of React's mounting order.
+  // Since child components (e.g., CompanyPageLeftPanel) mount and run their effects before parent components (e.g., Scaffold),
+  // a flat array state would result in the parent overriding/clearing the shortcuts registered by the child on mount.
+  // Using a namespace map (Record<string, KeyboardShortcut[]>) allows different components to register/unregister 
+  // shortcuts independently under unique keys (e.g., 'scaffold', 'left-panel') without interference.
+  const [pageShortcutsMap, setPageShortcutsMap] = useState<Record<string, KeyboardShortcut[]>>({});
   const [popupShortcuts, setPopupShortcutsState] = useState<KeyboardShortcut[]>([]);
   const [isPopupActive, setIsPopupActive] = useState(false);
 
@@ -69,8 +74,19 @@ export default function ShortcutProvider({ children }: { children: React.ReactNo
     setGlobalShortcutsState(shortcuts);
   }, []);
 
-  const setPageShortcuts = useCallback((shortcuts: KeyboardShortcut[]) => {
-    setPageShortcutsState(shortcuts);
+  const registerPageShortcuts = useCallback((key: string, shortcuts: KeyboardShortcut[]) => {
+    setPageShortcutsMap(prev => ({
+      ...prev,
+      [key]: shortcuts
+    }));
+  }, []);
+
+  const unregisterPageShortcuts = useCallback((key: string) => {
+    setPageShortcutsMap(prev => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
   }, []);
 
   const registerPopupShortcuts = useCallback((shortcuts: KeyboardShortcut[]) => {
@@ -82,6 +98,10 @@ export default function ShortcutProvider({ children }: { children: React.ReactNo
     setPopupShortcutsState([]);
     setIsPopupActive(false);
   }, []);
+
+  const pageShortcuts = useMemo(() => {
+    return Object.values(pageShortcutsMap).flat();
+  }, [pageShortcutsMap]);
 
   // Filter out any page shortcuts that conflict with global shortcuts
   const resolvedPageShortcuts = useMemo(() => {
@@ -141,12 +161,13 @@ export default function ShortcutProvider({ children }: { children: React.ReactNo
 
   const value: ShortcutContextType = useMemo(() => ({
     setGlobalShortcuts,
-    setPageShortcuts,
+    registerPageShortcuts,
+    unregisterPageShortcuts,
     registerPopupShortcuts,
     unregisterPopupShortcuts,
     activeShortcuts,
     isPopupActive
-  }), [setGlobalShortcuts, setPageShortcuts, registerPopupShortcuts, unregisterPopupShortcuts, activeShortcuts, isPopupActive]);
+  }), [setGlobalShortcuts, registerPageShortcuts, unregisterPageShortcuts, registerPopupShortcuts, unregisterPopupShortcuts, activeShortcuts, isPopupActive]);
 
   return (
     <ShortcutContext.Provider value={value}>

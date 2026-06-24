@@ -1,18 +1,4 @@
-import React from 'react';
-
-interface ErpInputFieldProps {
-  label: string;
-  error?: string;
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  placeholder?: string;
-  required?: boolean;
-  autoFocus?: boolean;
-  type?: string;
-  isTextArea?: boolean;
-  className?: string;
-}
+import { ErpInputFieldProps } from '../types/component.types';
 
 export default function ErpInputField({
   label,

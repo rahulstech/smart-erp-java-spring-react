@@ -11,3 +11,7 @@ export const createCompany = async (payload: CompanyFormData): Promise<Company> 
   const response = await api.post<Company>('/companies', payload);
   return response.data;
 };
+
+export const deleteCompany = async (companyId: string): Promise<void> => {
+  await api.delete(`/companies/${companyId}`);
+};

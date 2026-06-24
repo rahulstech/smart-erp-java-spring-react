@@ -1,17 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-
-export interface ErpTableProps<T> {
-  columns: string[];
-  data: T[];
-  onRowClick?: (item: T, index: number) => void;
-  isLoading?: boolean;
-  emptyContent?: React.ReactNode;
-  loadingContent?: React.ReactNode;
-  searchPlaceholder?: string;
-  searchKeys?: (keyof T)[];
-  onFilter?: (item: T) => boolean;
-  render?: (colIndex: number, item: T, rowIndex: number) => React.ReactNode;
-}
+import { useState, useEffect, useMemo, useCallback, useRef, cloneElement, isValidElement } from 'react';
+import { ErpTableProps } from '../types/component.types';
 
 export default function ErpTable<T>({
   columns,
@@ -23,10 +11,13 @@ export default function ErpTable<T>({
   searchPlaceholder = 'Search (Alt+F)',
   searchKeys,
   onFilter = () => true,
-  render
+  render,
+  contextMenu,
+  onClickContextItem
 }: ErpTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Filter data dynamically based on the search query and custom onFilter function
@@ -66,6 +57,15 @@ export default function ErpTable<T>({
   // Keyboard navigation & search focus shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle keys if Context Menu is active/open
+      if (isContextMenuOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setIsContextMenuOpen(false);
+        }
+        return;
+      }
+
       // Ignore keys if Alt+Shift combinations are active (handled globally)
       if (e.altKey && e.shiftKey) return;
 
@@ -74,6 +74,15 @@ export default function ErpTable<T>({
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
+        return;
+      }
+
+      // Alt+M opens context menu
+      if (contextMenu && e.altKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        if (filteredData.length > 0 && selectedIndex >= 0 && selectedIndex < filteredData.length) {
+          setIsContextMenuOpen(true);
+        }
         return;
       }
 
@@ -97,7 +106,7 @@ export default function ErpTable<T>({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filteredData, selectedIndex, handleSelectRow]);
+  }, [filteredData, selectedIndex, handleSelectRow, isContextMenuOpen, contextMenu]);
 
   return (
     <>
@@ -168,7 +177,30 @@ export default function ErpTable<T>({
         <span className="erp-table-legend-item">↑ ↓ Move</span>
         <span className="erp-table-legend-item">Enter Select</span>
         <span className="erp-table-legend-item">Alt+F Search</span>
+        {contextMenu && (
+          <span className="erp-table-legend-item">Alt+M Actions</span>
+        )}
       </div>
+
+      {/* Context Menu Rendering */}
+      {isContextMenuOpen &&
+        contextMenu &&
+        filteredData[selectedIndex] &&
+        (() => {
+          const focusedRow = filteredData[selectedIndex];
+          const menuElement = contextMenu(focusedRow);
+          if (isValidElement(menuElement)) {
+            return cloneElement(menuElement as React.ReactElement<any>, {
+              onItemClick: (itemId: string) => {
+                setIsContextMenuOpen(false);
+                if (onClickContextItem) {
+                  onClickContextItem(itemId, focusedRow);
+                }
+              }
+            });
+          }
+          return null;
+        })()}
     </>
   );
 }

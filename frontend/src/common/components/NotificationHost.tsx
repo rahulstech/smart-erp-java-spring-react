@@ -1,9 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import ToastNotification from './ToastNotification';
-
-export interface NotificationContextType {
-  showToast: (message: string) => void;
-}
+import { NotificationContextType, NotificationHostProps } from '../types/component.types';
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
@@ -13,10 +10,6 @@ export function useNotification() {
     throw new Error('useNotification must be used within a NotificationHost');
   }
   return context;
-}
-
-interface NotificationHostProps {
-  children: ReactNode;
 }
 
 export default function NotificationHost({ children }: NotificationHostProps) {

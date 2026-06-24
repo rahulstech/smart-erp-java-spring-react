@@ -1,12 +1,4 @@
-
-export interface ShortcutRowProps {
-  combination: string;
-  label: string;
-  onClick?: () => void;
-  selectable?: boolean;
-  selected?: boolean;
-  variant?: 'light' | 'dark';
-}
+import { ShortcutRowProps } from '../types/component.types';
 
 export default function ShortcutRow({
   combination,

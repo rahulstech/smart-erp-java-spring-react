@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Company } from '../../common/types/model.types';
 import Scaffold from '../../common/components/Scaffold';
@@ -6,6 +6,8 @@ import { useGetCompanies } from '../hooks/api.hooks';
 import ErpTable from '../../common/components/ErpTable';
 import CompanyPageLeftPanel from '../components/CompanyPageLeftPanel';
 import { useNotification } from '../../common/components/NotificationHost';
+import ContextMenu from '../../common/components/ContextMenu';
+import CompanyDeleteDialog from '../components/CompanyDeleteDialog';
 
 interface CompanySelectionMainProps {
   showToast: (message: string) => void;
@@ -14,6 +16,7 @@ interface CompanySelectionMainProps {
 function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
   // Fetch companies using the custom hook
   const { data: companiesList = [], isLoading } = useGetCompanies();
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
 
   const handleSelectCompany = useCallback((company: Company) => {
     showToast(`Selected Company: ${company.name}`);
@@ -22,34 +25,58 @@ function CompanySelectionMain({ showToast }: CompanySelectionMainProps) {
   const columns: string[] = ['ID', 'Name', 'Phone', 'Email', 'Address', 'GST Number'];
 
   return (
-    <ErpTable
-      columns={columns}
-      data={companiesList}
-      onRowClick={handleSelectCompany}
-      isLoading={isLoading}
-      searchPlaceholder="Search Company (Alt+F)"
-      render={(colIndex, company) => {
-        if (colIndex === 0) {
-          return <span className="font-mono">{company.id.substring(0, 8)}</span>;
-        }
-        if (colIndex === 1) {
-          return <span className="font-bold">{company.name}</span>;
-        }
-        if (colIndex === 2) {
-          return company.phone;
-        }
-        if (colIndex === 3) {
-          return company.email;
-        }
-        if (colIndex === 4) {
-          return <span title={company.address}>{company.address}</span>;
-        }
-        if (colIndex === 5) {
-          return <span className="font-mono">{company.gstNumber || 'N/A'}</span>;
-        }
-        return '';
-      }}
-    />
+    <>
+      <ErpTable
+        columns={columns}
+        data={companiesList}
+        onRowClick={handleSelectCompany}
+        isLoading={isLoading}
+        searchPlaceholder="Search Company (Alt+F)"
+        render={(colIndex, company) => {
+          if (colIndex === 0) {
+            return <span className="font-mono">{company.id.substring(0, 8)}</span>;
+          }
+          if (colIndex === 1) {
+            return <span className="font-bold">{company.name}</span>;
+          }
+          if (colIndex === 2) {
+            return company.phone;
+          }
+          if (colIndex === 3) {
+            return company.email;
+          }
+          if (colIndex === 4) {
+            return <span title={company.address}>{company.address}</span>;
+          }
+          if (colIndex === 5) {
+            return <span className="font-mono">{company.gstNumber || 'N/A'}</span>;
+          }
+          return '';
+        }}
+        contextMenu={(_) => (
+          <ContextMenu
+            items={[
+              { id: 'delete_company', title: 'Delete Company' },
+              { id: 'alter_company', title: 'Alter Company' }
+            ]}
+            onItemClick={() => {}}
+            title="Company Actions"
+          />
+        )}
+        onClickContextItem={(itemId, company) => {
+          if (itemId === 'delete_company') {
+            setCompanyToDelete(company);
+          } else {
+            console.log('Context item clicked:', itemId, company);
+          }
+        }}
+      />
+
+      <CompanyDeleteDialog
+        company={companyToDelete}
+        onClose={() => setCompanyToDelete(null)}
+      />
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import com.github.rahulstech.smarterp.company.dto.CompanyResponse;
 import com.github.rahulstech.smarterp.company.dto.CreateCompanyRequest;
 import com.github.rahulstech.smarterp.company.dto.UpdateCompanyRequest;
 import com.github.rahulstech.smarterp.company.service.CompanyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles HTTP requests for managing companies.
+ * Returns response payloads directly for standard 200 OK operations, 
+ * using ResponseEntity wrappers only for custom status codes like 201 or 204.
+ */
 @CrossOrigin
 @RestController
 @RequestMapping("/api/companies")
@@ -20,32 +26,44 @@ public class CompanyController {
 
     private final CompanyService companyService;
 
+    /**
+     * Creates a new company. Enforces request body validation.
+     */
     @PostMapping
-    public ResponseEntity<CompanyResponse> createCompany(@RequestBody CreateCompanyRequest request) {
+    public ResponseEntity<CompanyResponse> createCompany(@Valid @RequestBody CreateCompanyRequest request) {
         CompanyResponse response = companyService.createCompany(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * Updates an existing company's details.
+     */
     @PutMapping("/{companyId}")
-    public ResponseEntity<CompanyResponse> updateCompany(
+    public CompanyResponse updateCompany(
             @PathVariable("companyId") UUID companyId,
-            @RequestBody UpdateCompanyRequest request) {
-        CompanyResponse response = companyService.updateCompany(companyId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody UpdateCompanyRequest request) {
+        return companyService.updateCompany(companyId, request);
     }
 
+    /**
+     * Retrieves details for a specific company by ID.
+     */
     @GetMapping("/{companyId}")
-    public ResponseEntity<CompanyResponse> getCompany(@PathVariable("companyId") UUID companyId) {
-        CompanyResponse response = companyService.getCompany(companyId);
-        return ResponseEntity.ok(response);
+    public CompanyResponse getCompany(@PathVariable("companyId") UUID companyId) {
+        return companyService.getCompany(companyId);
     }
 
+    /**
+     * Retrieves all companies in the system.
+     */
     @GetMapping
-    public ResponseEntity<List<CompanyResponse>> getAllCompanies() {
-        List<CompanyResponse> response = companyService.getAllCompanies();
-        return ResponseEntity.ok(response);
+    public List<CompanyResponse> getAllCompanies() {
+        return companyService.getAllCompanies();
     }
 
+    /**
+     * Deletes a company by ID and returns no content.
+     */
     @DeleteMapping("/{companyId}")
     public ResponseEntity<Void> deleteCompany(@PathVariable("companyId") UUID companyId) {
         companyService.deleteCompany(companyId);

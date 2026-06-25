@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service implementation for managing Company entities.
+ * Restricts all read/write actions to companies owned by the currently authenticated user.
+ */
 @Service
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
@@ -25,6 +29,9 @@ public class CompanyServiceImpl implements CompanyService {
     private final CompanyMapper companyMapper;
     private final CurrentUserProvider currentUserProvider;
 
+    /**
+     * Creates a new company owned by the currently authenticated user.
+     */
     @Override
     @Transactional
     public CompanyResponse createCompany(CreateCompanyRequest request) {
@@ -34,6 +41,10 @@ public class CompanyServiceImpl implements CompanyService {
         return companyMapper.toResponse(saved);
     }
 
+    /**
+     * Updates an existing company's properties.
+     * Throws an HttpException if the company does not exist or is not owned by the current user.
+     */
     @Override
     @Transactional
     public CompanyResponse updateCompany(UUID companyId, UpdateCompanyRequest request) {
@@ -41,17 +52,17 @@ public class CompanyServiceImpl implements CompanyService {
         CompanyEntity entity = companyRepository.findByIdAndOwnerId(companyId, ownerId)
                 .orElseThrow(() -> HttpException.notFound("Company with id " + companyId + " not found"));
 
-        entity.setName(request.getName());
-        entity.setPhone(request.getPhone());
-        entity.setEmail(request.getEmail());
-        entity.setGstNumber(request.getGstNumber());
+        entity.setName(request.name());
+        entity.setPhone(request.phone());
+        entity.setEmail(request.email());
+        entity.setGstNumber(request.gstNumber());
 
         Address address = new Address(
-                request.getAddress(),
-                request.getCity(),
-                request.getState(),
-                request.getPincode(),
-                request.getCountry()
+                request.address(),
+                request.city(),
+                request.state(),
+                request.pincode(),
+                request.country()
         );
         entity.setAddress(address);
 
@@ -59,6 +70,9 @@ public class CompanyServiceImpl implements CompanyService {
         return companyMapper.toResponse(updated);
     }
 
+    /**
+     * Deletes a company owned by the current user.
+     */
     @Override
     @Transactional
     public void deleteCompany(UUID companyId) {
@@ -69,6 +83,9 @@ public class CompanyServiceImpl implements CompanyService {
         companyRepository.delete(entity);
     }
 
+    /**
+     * Retrieves a single company owned by the current user.
+     */
     @Override
     @Transactional(readOnly = true)
     public CompanyResponse getCompany(UUID companyId) {
@@ -79,6 +96,9 @@ public class CompanyServiceImpl implements CompanyService {
         return companyMapper.toResponse(entity);
     }
 
+    /**
+     * Retrieves all companies owned by the current user.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<CompanyResponse> getAllCompanies() {

@@ -8,6 +8,49 @@ import { KeyboardShortcut, PopupProps } from '../types/component.types';
 // allPopupShortcuts from recalculating and triggering an infinite keydown shortcut registration loop in useEffect.
 const EMPTY_SHORTCUTS: KeyboardShortcut[] = [];
 
+type PopupPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right' | 'center';
+
+const getPositionStyles = (pos: PopupPosition): React.CSSProperties => {
+  const styles: React.CSSProperties = {
+    padding: '1.5rem',
+    boxSizing: 'border-box'
+  };
+
+  switch (pos) {
+    case 'top-left':
+      styles.justifyContent = 'flex-start';
+      styles.alignItems = 'flex-start';
+      break;
+    case 'top-center':
+      styles.justifyContent = 'center';
+      styles.alignItems = 'flex-start';
+      break;
+    case 'top-right':
+      styles.justifyContent = 'flex-end';
+      styles.alignItems = 'flex-start';
+      break;
+    case 'bottom-left':
+      styles.justifyContent = 'flex-start';
+      styles.alignItems = 'flex-end';
+      break;
+    case 'bottom-center':
+      styles.justifyContent = 'center';
+      styles.alignItems = 'flex-end';
+      break;
+    case 'bottom-right':
+      styles.justifyContent = 'flex-end';
+      styles.alignItems = 'flex-end';
+      break;
+    case 'center':
+    default:
+      styles.justifyContent = 'center';
+      styles.alignItems = 'center';
+      break;
+  }
+
+  return styles;
+};
+
 export default function Popup({
   onClose,
   title,
@@ -17,7 +60,8 @@ export default function Popup({
   className = '',
   footer,
   cancelable = true,
-  style
+  style,
+  position = 'center'
 }: PopupProps) {
   // Controlling visibility by mounting/unmounting the component ({isOpen && <Popup />}) is preferred
   // over using an 'isOpen' prop. Mounting/unmounting allows cleanup functions (like unregisterPopupShortcuts)
@@ -27,32 +71,32 @@ export default function Popup({
   const singleChild = React.Children.only(children);
 
   const allPopupShortcuts = useMemo<KeyboardShortcut[]>(() => {
-    if (onClose && cancelable) {
+    if (cancelable) {
       const escShortcut: KeyboardShortcut = {
         combination: 'Escape',
         label: 'Quit',
-        handler: onClose
+        handler: () => onClose?.()
       };
       return [escShortcut, ...shortcuts];
     }
     return shortcuts;
   }, [onClose, shortcuts, cancelable]);
 
-  const { registerPopupShortcuts, unregisterPopupShortcuts } = useShortcuts();
+  const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
   useEffect(() => {
-    registerPopupShortcuts(allPopupShortcuts);
+    registerShortcuts('popup', allPopupShortcuts);
     return () => {
-      unregisterPopupShortcuts();
+      unregisterShortcuts('popup');
     };
-  }, [allPopupShortcuts, registerPopupShortcuts, unregisterPopupShortcuts]);
+  }, [allPopupShortcuts, registerShortcuts, unregisterShortcuts]);
 
   const content = (
     <>
       {showBackdrop && (
         <div className="erp-popup-backdrop" onClick={cancelable ? onClose : undefined} />
       )}
-      <div className="erp-popup-wrapper">
+      <div className="erp-popup-wrapper" style={getPositionStyles(position)}>
         <div className={`erp-popup-container ${className}`} style={style}>
           {title && (
             <div className="erp-popup-header">
@@ -62,10 +106,9 @@ export default function Popup({
           <div className="erp-popup-content">
             {singleChild}
           </div>
-          {((cancelable) || footer) && (
+          {footer && (
             <div className="erp-popup-footer">
-
-              { footer ?? <span className="erp-popup-footer-esc">Esc Quit</span> }
+              {footer}
             </div>
           )}
         </div>

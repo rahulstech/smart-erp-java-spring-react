@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CompanyFormData, CompanyInputProps } from '../types/company.types';
 import { useNotification } from '../../common/components/NotificationHost';
 import ErpInputField from '../../common/components/ErpInputField';
+import { useShortcuts } from '@/common/hooks/useShortcuts';
+import { KeyboardShortcut } from '@/common/types/component.types';
 
+// Default initial state for form inputs when creating a new company
 const DEFAULT_FORM_DATA: CompanyFormData = {
   name: '',
   phone: '',
@@ -16,20 +18,27 @@ const DEFAULT_FORM_DATA: CompanyFormData = {
   pincode: ''
 };
 
+/**
+ * Renders the form interface to create or edit a Company's details.
+ * Contains client-side field validation and binds component-level Esc and Ctrl+S shortcuts.
+ */
 export default function CompanyInput({ onSave, initialData }: CompanyInputProps) {
-  const navigate = useNavigate();
   const { showToast } = useNotification();
+  const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
   const [formData, setFormData] = useState<CompanyFormData>(initialData || DEFAULT_FORM_DATA);
   const [errors, setErrors] = useState<Partial<Record<keyof CompanyFormData, string>>>({});
 
-  // Sync initialData when it changes (e.g. when loaded asynchronously)
+  // Keeps local form state in sync when initial data loads asynchronously
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     }
   }, [initialData]);
 
+  /**
+   * Updates state on text input and clears the active validation error for that field.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -45,6 +54,9 @@ export default function CompanyInput({ onSave, initialData }: CompanyInputProps)
     }
   };
 
+  /**
+   * Validates input fields and triggers the save callback if no issues are found.
+   */
   const handleSave = useCallback(() => {
     const newErrors: Partial<Record<keyof CompanyFormData, string>> = {};
     if (!formData.name.trim()) {
@@ -63,26 +75,21 @@ export default function CompanyInput({ onSave, initialData }: CompanyInputProps)
     onSave(formData);
   }, [formData, onSave, showToast]);
 
-  const handleCancel = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
 
-  // Install keyboard shortcuts directly
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancel();
-      } else if (e.ctrlKey && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        handleSave();
+  useEffect(()=> {
+    const shortcuts: KeyboardShortcut[] = [
+      {
+        combination: 'Ctrl+S',
+        label: 'Save',
+        handler: handleSave
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleCancel, handleSave]);
+    ];
+
+    registerShortcuts('CompanyInput', shortcuts);
+
+    return ()=> { unregisterShortcuts('CompanyInput'); };
+  }, [registerShortcuts, unregisterShortcuts, handleSave]);
+
 
   return (
     <div className="smarterp-container">
@@ -193,17 +200,10 @@ export default function CompanyInput({ onSave, initialData }: CompanyInputProps)
 
         <div className="smarterp-footer">
           <button
-            type="button"
-            onClick={handleCancel}
-            className="smarterp-btn-cancel"
-          >
-            Cancel (Esc)
-          </button>
-          <button
             type="submit"
             className="smarterp-btn-save"
           >
-            Accept (Ctrl+S)
+            Save (Ctrl+S)
           </button>
         </div>
       </form>

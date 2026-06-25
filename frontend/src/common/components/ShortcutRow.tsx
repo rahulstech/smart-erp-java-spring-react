@@ -16,8 +16,8 @@ export default function ShortcutRow({
       className={`erp-shortcut-row variant-${variant} ${isSelected ? 'selected' : ''}`}
       title={`Trigger shortcut: ${combination}`}
     >
-      <span className="erp-shortcut-row-key">{combination}</span>
       <span className="erp-shortcut-row-action">{label}</span>
+      <span className="erp-shortcut-row-key">{combination}</span>
     </div>
   );
 }

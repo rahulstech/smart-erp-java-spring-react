@@ -1,18 +1,20 @@
 import { ReactNode, ChangeEvent } from 'react';
 
 // Global / Shared Types
-export interface KeyboardShortcut {
-  combination: string;
-  handler: () => void;
-  label: string;
+import { KeyboardShortcut } from './shortcut.types';
+
+export type { KeyboardShortcut };
+
+export interface RouteType {
+  path: string;
+  create?: (...params: any[]) => string;
 }
 
 // Scaffold Component Types
 export interface ScaffoldProps {
   title: string;
   shortcuts?: KeyboardShortcut[];
-  leftPanel?: ReactNode;
-  mainPanel?: ReactNode;
+  children?: ReactNode;
   onRetry?: () => void;
 }
 
@@ -27,7 +29,20 @@ export interface PopupProps {
   footer?: ReactNode;
   cancelable?: boolean;
   style?: React.CSSProperties;
+  position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right' | 'center';
 }
+
+// Card Component Types
+export interface CardProps {
+  cornerRadius?: number;
+  elevation?: number;
+  borderThickness?: number;
+  borderColor?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  children: ReactNode;
+}
+
 
 // ContextMenu Component Types
 export interface ContextMenuItem {
@@ -62,13 +77,11 @@ export interface ErpTableProps<T> {
   columns: string[];
   data: T[];
   onRowClick?: (item: T, index: number) => void;
+  onFocusedRowChanged?: (index: number, item: T | undefined) => void;
   emptyContent?: ReactNode;
   searchPlaceholder?: string;
-  searchKeys?: (keyof T)[];
-  onFilter?: (item: T) => boolean;
+  onFilter?: (item: T, query: string) => boolean;
   render?: (colIndex: number, item: T, rowIndex: number) => ReactNode;
-  contextMenu?: (focusedRow: T) => ReactNode;
-  onClickContextItem?: (itemId: string, rowData: T) => void;
 }
 
 // NotificationHost Component Types
@@ -105,8 +118,7 @@ export interface DialogButtonItem {
 }
 
 export interface DialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   title?: string;
   icon?: ReactNode;
   content: ReactNode;
@@ -119,7 +131,9 @@ export interface LoadingPopupProps {
   message: string;
 }
 
-// ErrorRetry Component Types
-export interface ErrorRetryProps {
-  message: string;
+export interface ConfirmationDialogProps {
+  title?: string;
+  children: ReactNode;
+  onYes?: ()=> void;
+  onNo?: ()=> void;
 }

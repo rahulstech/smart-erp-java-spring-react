@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import Popup from './Popup';
 import { DialogProps, KeyboardShortcut } from '../types/component.types';
 
 export default function Dialog({
-  isOpen,
   onClose,
   title,
   icon,
@@ -11,12 +10,9 @@ export default function Dialog({
   buttons = [],
   onClickButton
 }: DialogProps) {
-  const handleButtonClick = (buttonId: string) => {
-    onClose();
-    if (onClickButton) {
-      onClickButton(buttonId);
-    }
-  };
+  const handleButtonClick = useCallback((buttonId: string) => {
+    onClickButton?.(buttonId);
+  }, [onClickButton]);
 
   const shortcuts = useMemo<KeyboardShortcut[]>(() => {
     if (!buttons) return [];
@@ -29,9 +25,7 @@ export default function Dialog({
           handleButtonClick(btn.id);
         }
       }));
-  }, [buttons, onClickButton, onClose]);
-
-  if (!isOpen) return null;
+  }, [buttons, handleButtonClick]);
 
   return (
     <Popup

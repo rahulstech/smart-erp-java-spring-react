@@ -1,9 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
-import CompanySelectionPage from './company/pages/CompanySelectionPage'
+import CompanyListPage from './company/pages/CompanyListPage'
 import CreateCompanyPage from './company/pages/CreateCompanyPage'
 import EditCompanyPage from './company/pages/EditCompanyPage'
+import CompanyDashboardPage from './company/pages/CompanyDashboardPage'
 import NotificationHost from './common/components/NotificationHost'
 import ShortcutProvider from './common/components/ShortcutProvider'
+import { APP_ROUTES } from './common/constants'
 
 export default function App() {
   return (
@@ -11,9 +13,11 @@ export default function App() {
       <ShortcutProvider>
         <div className="min-h-screen bg-white text-black antialiased font-sans">
           <Routes>
-            <Route path="/" element={<CompanySelectionPage />} />
-            <Route path="/create-company" element={<CreateCompanyPage />} />
-            <Route path="/edit-company/:company_id" element={<EditCompanyPage />} />
+            <Route path={APP_ROUTES.HOME.path} element={<CompanyListPage />} />
+            <Route path={APP_ROUTES.COMPANY_SELECTION.path} element={<CompanyListPage />} />
+            <Route path={APP_ROUTES.CREATE_COMPANY.path} element={<CreateCompanyPage />} />
+            <Route path={APP_ROUTES.EDIT_COMPANY.path} element={<EditCompanyPage />} />
+            <Route path={APP_ROUTES.DASHBOARD.path} element={<CompanyDashboardPage />} />
           </Routes>
         </div>
       </ShortcutProvider>

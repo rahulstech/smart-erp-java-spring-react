@@ -1,10 +1,17 @@
-import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { KeyboardShortcut } from '../types/component.types';
-import { ShortcutContextType } from '../types/shortcut.types';
+import React, { createContext, useEffect, useMemo, useCallback, useRef } from 'react';
+import { KeyboardShortcut, ShortcutContextType } from '../types/shortcut.types';
 
 export const ShortcutContext = createContext<ShortcutContextType | null>(null);
 
-// Helper to parse key combo strings for matching
+interface ShortcutScope {
+  key: string;
+  shortcuts: KeyboardShortcut[];
+}
+
+/**
+ * Parses hotkey strings (e.g. 'Ctrl+Alt+S') into flags representing 
+ * required modifier keys and the targeted action key.
+ */
 function parseCombination(comboStr: string) {
   const parts = comboStr.toLowerCase().split('+').map(p => p.trim());
   return {
@@ -16,158 +23,82 @@ function parseCombination(comboStr: string) {
   };
 }
 
-// Helper to check if event matches a key combination
+/**
+ * Compares event properties of a keydown event against a target combo string.
+ * Standardizes common keys like Escape or arrow keys.
+ */
 function matchesShortcut(e: KeyboardEvent, comboStr: string): boolean {
   const target = parseCombination(comboStr);
   
-  // Standardize modifier key checks
   if (e.ctrlKey !== target.ctrl) return false;
   if (e.altKey !== target.alt) return false;
   if (e.shiftKey !== target.shift) return false;
   if (e.metaKey !== target.meta) return false;
   
-  // Match key case-insensitively
-  const eventKey = e.key.toLowerCase();
+  const eventKey = e.key ? e.key.toLowerCase() : '';
+  const eventCode = e.code ? e.code.toLowerCase() : '';
   
-  // Handle some common key name mappings
   if (target.key === 'esc' || target.key === 'escape') {
-    return eventKey === 'escape';
+    return eventKey === 'escape' || eventKey === 'esc' || eventCode === 'escape';
   }
   if (target.key === 'enter') {
-    return eventKey === 'enter';
+    return eventKey === 'enter' || eventCode === 'enter' || eventCode === 'numpadenter';
   }
   if (target.key === 'up' || target.key === 'arrowup') {
-    return eventKey === 'arrowup';
+    return eventKey === 'arrowup' || eventCode === 'arrowup';
   }
   if (target.key === 'down' || target.key === 'arrowdown') {
-    return eventKey === 'arrowdown';
+    return eventKey === 'arrowdown' || eventCode === 'arrowdown';
   }
   
-  return eventKey === target.key;
+  return eventKey === target.key || eventCode === `key${target.key}`;
 }
 
-function deduplicateShortcuts(shortcuts: KeyboardShortcut[]): KeyboardShortcut[] {
-  const seen = new Set<string>();
-  const result: KeyboardShortcut[] = [];
-  for (let i = shortcuts.length - 1; i >= 0; i--) {
-    const combo = shortcuts[i].combination.toLowerCase();
-    if (!seen.has(combo)) {
-      seen.add(combo);
-      result.unshift(shortcuts[i]);
-    }
-  }
-  return result;
-}
-
+/**
+ * Context provider managing keyboard shortcuts across the application.
+ * Retains single registerShortcuts / unregisterShortcuts methods to manage shortcut maps.
+ */
 export default function ShortcutProvider({ children }: { children: React.ReactNode }) {
-  const [globalShortcuts, setGlobalShortcutsState] = useState<KeyboardShortcut[]>([]);
-  // A Map (pageShortcutsMap) is used here instead of a simple flat array because of React's mounting order.
-  // Since child components (e.g., CompanyPageLeftPanel) mount and run their effects before parent components (e.g., Scaffold),
-  // a flat array state would result in the parent overriding/clearing the shortcuts registered by the child on mount.
-  // Using a namespace map (Record<string, KeyboardShortcut[]>) allows different components to register/unregister 
-  // shortcuts independently under unique keys (e.g., 'scaffold', 'left-panel') without interference.
-  const [pageShortcutsMap, setPageShortcutsMap] = useState<Record<string, KeyboardShortcut[]>>({});
-  const [popupShortcuts, setPopupShortcutsState] = useState<KeyboardShortcut[]>([]);
-  const [isPopupActive, setIsPopupActive] = useState(false);
+  const scopesRef = useRef<ShortcutScope[]>([]);
 
-  const setGlobalShortcuts = useCallback((shortcuts: KeyboardShortcut[]) => {
-    setGlobalShortcutsState(shortcuts);
+  const registerShortcuts = useCallback((key: string, shortcuts: KeyboardShortcut[]) => {
+    const filtered = scopesRef.current.filter(s => s.key !== key);
+    scopesRef.current = [...filtered, { key, shortcuts }];
   }, []);
 
-  const registerPageShortcuts = useCallback((key: string, shortcuts: KeyboardShortcut[]) => {
-    setPageShortcutsMap(prev => ({
-      ...prev,
-      [key]: shortcuts
-    }));
+  const unregisterShortcuts = useCallback((key: string) => {
+    scopesRef.current = scopesRef.current.filter(s => s.key !== key);
   }, []);
 
-  const unregisterPageShortcuts = useCallback((key: string) => {
-    setPageShortcutsMap(prev => {
-      const copy = { ...prev };
-      delete copy[key];
-      return copy;
-    });
-  }, []);
-
-  const registerPopupShortcuts = useCallback((shortcuts: KeyboardShortcut[]) => {
-    setPopupShortcutsState(shortcuts);
-    setIsPopupActive(true);
-  }, []);
-
-  const unregisterPopupShortcuts = useCallback(() => {
-    setPopupShortcutsState([]);
-    setIsPopupActive(false);
-  }, []);
-
-  const pageShortcuts = useMemo(() => {
-    return Object.values(pageShortcutsMap).flat();
-  }, [pageShortcutsMap]);
-
-  // Filter out any page shortcuts that conflict with global shortcuts
-  const resolvedPageShortcuts = useMemo(() => {
-    const deduped = deduplicateShortcuts(pageShortcuts);
-    return deduped.filter(shortcut => {
-      const isConflicting = globalShortcuts.some(gs => 
-        gs.combination.toLowerCase() === shortcut.combination.toLowerCase()
-      );
-      if (isConflicting) {
-        console.warn(
-          `Conflict Warning: The shortcut "${shortcut.combination}" is registered globally by Scaffold and cannot be overridden. Discarding dynamic handler for "${shortcut.label}".`
-        );
-      }
-      return !isConflicting;
-    });
-  }, [pageShortcuts, globalShortcuts]);
-
-  // Filter out any popup shortcuts that conflict with global shortcuts
-  const resolvedPopupShortcuts = useMemo(() => {
-    const deduped = deduplicateShortcuts(popupShortcuts);
-    return deduped.filter(shortcut => {
-      const isConflicting = globalShortcuts.some(gs => 
-        gs.combination.toLowerCase() === shortcut.combination.toLowerCase()
-      );
-      if (isConflicting) {
-        console.warn(
-          `Conflict Warning: The shortcut "${shortcut.combination}" is registered globally by Scaffold and cannot be overridden. Discarding dynamic handler for "${shortcut.label}".`
-        );
-      }
-      return !isConflicting;
-    });
-  }, [popupShortcuts, globalShortcuts]);
-
-  // Determine active shortcuts based on whether a popup is showing
-  const activeShortcuts = useMemo(() => {
-    if (isPopupActive) {
-      return [...globalShortcuts, ...resolvedPopupShortcuts];
-    }
-    return [...globalShortcuts, ...resolvedPageShortcuts];
-  }, [isPopupActive, globalShortcuts, resolvedPopupShortcuts, resolvedPageShortcuts]);
-
-  // Listen to keydown event
+  // Binds keydown event listener to window
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      for (const shortcut of activeShortcuts) {
+      // Evaluate matching shortcuts from latest scope to oldest scope
+      const activeShortcuts = [...scopesRef.current].reverse().flatMap(s => s.shortcuts);
+      for (let i = 0; i < activeShortcuts.length; i++) {
+        const shortcut = activeShortcuts[i];
         if (matchesShortcut(e, shortcut.combination)) {
-          e.preventDefault();
-          shortcut.handler();
-          return;
+          const isHandled = shortcut.handler();
+          // If handler explicitly returns false, it was not handled; continue to next older matching handler.
+          if (isHandled !== false) {
+            e.preventDefault();
+            return;
+          }
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeShortcuts]);
+  }, []);
 
   const value: ShortcutContextType = useMemo(() => ({
-    setGlobalShortcuts,
-    registerPageShortcuts,
-    unregisterPageShortcuts,
-    registerPopupShortcuts,
-    unregisterPopupShortcuts,
-    activeShortcuts,
-    isPopupActive
-  }), [setGlobalShortcuts, registerPageShortcuts, unregisterPageShortcuts, registerPopupShortcuts, unregisterPopupShortcuts, activeShortcuts, isPopupActive]);
+    registerShortcuts,
+    unregisterShortcuts,
+    get activeShortcuts() {
+      return [...scopesRef.current].reverse().flatMap(s => s.shortcuts);
+    }
+  }), [registerShortcuts, unregisterShortcuts]);
 
   return (
     <ShortcutContext.Provider value={value}>
@@ -175,3 +106,4 @@ export default function ShortcutProvider({ children }: { children: React.ReactNo
     </ShortcutContext.Provider>
   );
 }
+

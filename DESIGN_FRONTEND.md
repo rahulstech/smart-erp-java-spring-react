@@ -1,34 +1,10 @@
-# SmartERP Design Guidelines
+# SmartERP Frontend Design Guidelines
 
-This document outlines key project-wide development patterns and constraints for SmartERP backend development. Any agent working on this repository must read and adhere to these rules.
-
----
-
-## 1. Address Representation
-* **Embeddable Address Entity**: The common embeddable model `com.github.rahulstech.smarterp.common.model.Address` must use a single `address` field representing the street address, rather than split fields like `addressLine1` and `addressLine2`.
-* **DTO Layer**: All request and response DTOs containing addresses must align with this representation, utilizing a single `address` string field alongside standard fields like `city`, `state`, `pincode`, and `country`.
+This document outlines key project-wide development patterns and constraints for SmartERP frontend development. Any agent working on this repository must read and adhere to these rules.
 
 ---
 
-## 2. HTTP Exception Handling
-* **No Specific/Custom Exceptions**: Avoid creating custom HTTP exception classes (e.g., `CompanyNotFoundException`, `UserNotFoundException`, etc.) within slices or domain modules.
-* **Unified HttpException Class**: Always throw the common exception class `com.github.rahulstech.smarterp.common.exception.HttpException`.
-* **Static Helper Methods**: Utilize (and, if needed, extend) the static helper methods defined inside `HttpException` to instantiate exceptions with the appropriate HTTP status code:
-  * `HttpException.notFound(message)` — for `404 Not Found`
-  * `HttpException.badRequest(message)` — for `400 Bad Request`
-  * `HttpException.unauthorized(message)` — for `401 Unauthorized`
-  * `HttpException.forbidden(message)` — for `403 Forbidden`
-  * `HttpException.internalServerError(message)` — for `500 Internal Server Error`
-
----
-
-## 3. Database SQL Scripts
-* **Entity and Repository Changes**: Whenever a new database entity is created or repository queries are updated, you must create or update a corresponding SQL script defining the tables, indices, functions, or procedures.
-* **Granularity**: Create separate SQL script files for each table individually (under the `backend/sql` directory) rather than combining multiple tables into a single script.
-
----
-
-## 4. Frontend Module Structure & Guidelines
+## 1. Frontend Module Structure & Guidelines
 * **Module-Scoped Directories**: Any module inside `frontend/src/` (such as `company` or any new module) should be organized with at most the following child directories:
   * `pages/` — contains `.tsx` pages/views for this module.
   * `services/` — contains API communication and service code specific to this module.
@@ -51,7 +27,16 @@ This document outlines key project-wide development patterns and constraints for
   * If a dynamic shortcut conflicts with a global shortcut, the global shortcut takes precedence, the dynamic one is discarded, and a warning is printed to the console.
   * If there are duplicate dynamic shortcuts registered by the active page components, the last registered handler takes precedence.
   * All registered shortcuts must be dynamically listed in the right shortcut panel.
+  * **Global Shortcut Definitions**: Always define any global shortcut as a constant in `src/common/constants.ts` first, and add it to the `GLOBAL_SHORTCUTS` array before utilizing it in the application.
+* **Routing Patterns & Constants**:
+  * Always define all route paths inside the `APP_ROUTES` object in `src/common/constants.ts` first.
+  * Always reference paths or route creation helper functions from `APP_ROUTES` anywhere route paths are used in the frontend application. Never hardcode route paths in links, navigation handlers, or Route definitions.
 * **Adherence**: Adhere strictly to this architectural structure to ensure consistency across the entire frontend application.
 
+---
 
-
+## 2. Commenting & Documentation Rules
+* **General Comments**: Keep general comments as short as possible, describing only the core purpose and confusing parts. Avoid commenting on obvious things.
+* **Style & Readability**: Use simple sentences that are not too verbose and avoid heavy or hard words. Restrict the width of comments so they can be read without horizontal scrolling. Write comments in one or two short paragraphs, or use markdown bullet points for step-by-step guides.
+* **Tricky/Critical Logic**: Always explain tricky or critical logic. Describe *what* the logic is doing and *why* it is designed that way, so future developers can understand the reasoning. Do not use phrases like "hey future me..." or "hey reader...". Avoid separating comments into explicit "why" and "what" headings.
+* **Lengthy Multi-step Actions**: For long, multi-step actions (4 or more steps), place a single-line comment before each step to outline what is happening. If possible, refactor correlated steps into helper methods of up to 3 steps each, unless maintaining a single multi-step method is better for code readability and simplicity.

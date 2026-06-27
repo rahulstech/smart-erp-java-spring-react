@@ -6,10 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,7 +45,7 @@ public class GlobalErrorHandler {
             MethodArgumentNotValidException e, HttpServletRequest request) {
         
         // Log the endpoint path that failed validation
-        log.error("Validation error on path: {}", request.getRequestURI());
+        log.error("Request body validation failed on path: {}", request.getRequestURI());
 
         // Log specific field names and values for debugging
         if (log.isDebugEnabled()) {
@@ -55,14 +59,70 @@ public class GlobalErrorHandler {
         // Collect distinct field validation errors into a map.
         // If the same field fails multiple constraints, the first message is retained.
         Map<String, String> reasons = e.getBindingResult().getFieldErrors().stream()
-                .filter(error -> error.getField() != null && error.getDefaultMessage() != null)
+                .filter(error -> error.getDefaultMessage() != null)
                 .collect(Collectors.toMap(
                         FieldError::getField,
                         FieldError::getDefaultMessage,
                         (existing, replacement) -> existing
                 ));
 
-        var body = new ErrorResponse.FieldError(HttpStatus.BAD_REQUEST.value(), reasons);
+        var body = new ErrorResponse.FieldError(400, reasons);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * Processes missing or unreadable request body failures. Logs the failed URI path at ERROR level
+     * and returns a FieldError response.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException e, HttpServletRequest request) {
+
+        log.error("Request body on path: {} has error {}", request.getRequestURI(), e.getMessage());
+
+        var body = new ErrorResponse.SimpleError(400, "Required request body is missing or unreadable");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * Handles unsupported HTTP methods (405 Method Not Allowed).
+     * Logs the HTTP request method and path at ERROR level.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
+
+        log.error("HTTP method {} is not supported for path: {}", request.getMethod(), request.getRequestURI());
+
+        var body = new ErrorResponse.SimpleError(405,"Request method is not supported");
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
+    }
+
+    /**
+     * Handles endpoint or resource not found exceptions (404 Not Found).
+     * Logs the requested method and path at ERROR level.
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<@NonNull ErrorResponse> handleNotFoundException(
+            Exception e, HttpServletRequest request) {
+
+        log.error("Path not found for method {} at URI: {}", request.getMethod(), request.getRequestURI());
+
+        var body = new ErrorResponse.SimpleError(404,"Path not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    /**
+     * Catches any unhandled Throwable or system exception.
+     * Logs full stack trace at ERROR level and returns a generic 500 Internal Server Error response.
+     */
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<@NonNull ErrorResponse> handleUnhandledThrowable(
+            Throwable e, HttpServletRequest request) {
+
+        log.error("Unhandled exception on path {} {}: {}", request.getMethod(), request.getRequestURI(), e.getMessage(), e);
+
+        var body = new ErrorResponse.SimpleError(500,"An internal server error occurred");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

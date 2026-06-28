@@ -31,7 +31,9 @@ export default function CompanyDashboardPage() {
       combination: 'Alt+C',
       label: 'Create Customer',
       handler: () => {
-        showToast('Create Customer under construction');
+        if (company_id && APP_ROUTES.CREATE_CUSTOMER.create) {
+          navigate(APP_ROUTES.CREATE_CUSTOMER.create(company_id));
+        }
       }
     },
     {
@@ -78,7 +80,7 @@ export default function CompanyDashboardPage() {
       >
         <div className="flex w-full h-full overflow-hidden">
           {/* MAIN PANEL */}
-          <div className="erp-panel-main flex-1 overflow-y-auto">
+          <div className="erp-panel-main flex-1 overflow-y-auto flex justify-center">
             {isError ? (
               <div className="flex w-full h-full justify-center items-center p-6">
                 <Card className="max-w-md w-full mx-auto">
@@ -89,7 +91,7 @@ export default function CompanyDashboardPage() {
                 </Card>
               </div>
             ) : company ? (
-              <div className="p-6 w-full max-w-4xl">
+              <div className="p-6 w-full mx-auto">
                 {/* Dashboard top row */}
                 <div className="flex justify-between items-center border-b border-[#cbd5e1] pb-2 mb-6">
                   <span className="text-xl font-bold text-[#002c66]">

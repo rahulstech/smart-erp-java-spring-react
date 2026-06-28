@@ -59,5 +59,12 @@ export const APP_ROUTES: Record<string, RouteType> = {
       const companyId = params[0];
       return `/companies/${companyId}/dashboard`;
     }
+  },
+  CREATE_CUSTOMER: {
+    path: '/companies/:company_id/create-customer',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/create-customer`;
+    }
   }
 };

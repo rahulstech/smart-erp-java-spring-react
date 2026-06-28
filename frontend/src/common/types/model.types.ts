@@ -10,3 +10,16 @@ export interface Company {
   country?: string;
   gstNumber?: string;
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  currentBalance: number;
+  city?: string;
+  state?: string;
+  address?: string;
+  pincode?: string;
+}
+

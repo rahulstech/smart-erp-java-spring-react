@@ -72,6 +72,17 @@ export interface ErpInputFieldProps {
   className?: string;
 }
 
+// Table Component Types
+export interface TableProps<T> {
+  headers?: string[];
+  renderHeaderCell?: (header: string) => ReactNode;
+  renederHeaderCell?: (header: string) => ReactNode;
+  data: T[];
+  renderRowCell?: (row: T, colIndex: number) => ReactNode;
+  onRowClicked?: (row: T) => void;
+  selectedIndex?: number;
+}
+
 // ErpTable Component Types
 export interface ErpTableProps<T> {
   columns: string[];

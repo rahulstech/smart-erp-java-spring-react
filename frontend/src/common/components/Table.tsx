@@ -1,14 +1,5 @@
-import { useState, useRef, useEffect, KeyboardEvent, ReactNode } from 'react';
-
-export interface TableProps<T> {
-  headers?: string[];
-  renderHeaderCell?: (header: string) => ReactNode;
-  renederHeaderCell?: (header: string) => ReactNode; // Alias to handle potential typo in prop names
-  data: T[];
-  renderRowCell?: (row: T, colIndex: number) => ReactNode;
-  onRowClicked?: (row: T) => void;
-  selectedIndex?: number; // Optional prop to control selection externally (e.g., keyboard navigation)
-}
+import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { TableProps } from '../types/component.types';
 
 export default function Table<T>({
   headers,

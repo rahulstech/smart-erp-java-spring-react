@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Customer } from '../../common/types/model.types';
+import { Supplier } from '../../common/types/model.types';
 import { KeyboardShortcut } from '../../common/types/component.types';
 import ErpTable from '../../common/components/ErpTable';
 import ShortcutRow from '../../common/components/ShortcutRow';
@@ -8,71 +8,71 @@ import LoadingPopup from '../../common/components/LoadingPopup';
 import Card from '../../common/components/Card';
 import { useNotification } from '../../common/components/NotificationHost';
 import ConfirmationDialog from '../../common/components/ConfirmationDialog';
-import { useGetCustomers, useDeleteCustomer } from '../hooks/api.hooks';
+import { useGetSuppliers, useDeleteSupplier } from '../hooks/api.hooks';
 import { APP_ROUTES } from '../../common/constants';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
 import { useScaffoldContext } from '../../common/context/ScaffoldContext';
 
-const COLUMNS: string[] = ['Name', 'Phone', 'Current Balance'];
+const COLUMNS: string[] = ['Code', 'Name', 'Phone', 'Outstanding Amount'];
 
-export default function CustomerListPage() {
+export default function SupplierListPage() {
   const { company_id } = useParams<{ company_id: string }>();
   const navigate = useNavigate();
   const { showToast } = useNotification();
   const { setTitle, setOnRetry } = useScaffoldContext();
-  const [focusedCustomer, setFocusedCustomer] = useState<Customer | undefined>(undefined);
+  const [focusedSupplier, setFocusedSupplier] = useState<Supplier | undefined>(undefined);
   const [showDeleteDialog, changeShowDeleteDialog] = useState<boolean>(false);
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
-  const { data: customersList = [], isLoading, isError, refetch } = useGetCustomers(company_id || '');
-  const { mutate: deleteCustomer, isPending: isDeletePending } = useDeleteCustomer(company_id || '');
+  const { data: suppliersList = [], isLoading, isError, refetch } = useGetSuppliers(company_id || '');
+  const { mutate: deleteSupplier, isPending: isDeletePending } = useDeleteSupplier(company_id || '');
 
   useEffect(() => {
-    setTitle("List of Customers");
+    setTitle("List of Suppliers");
     setOnRetry(isError ? refetch : undefined);
   }, [setTitle, setOnRetry, isError, refetch]);
 
-  const handleFocusedRowChanged = useCallback((_index: number, customer: Customer | undefined) => {
-    setFocusedCustomer(customer);
+  const handleFocusedRowChanged = useCallback((_index: number, supplier: Supplier | undefined) => {
+    setFocusedSupplier(supplier);
   }, []);
 
   const leftShortcuts = useMemo<KeyboardShortcut[]>(() => [
     {
       combination: 'Alt+E',
-      label: 'Edit Customer',
+      label: 'Edit Supplier',
       handler: () => {
-        if (focusedCustomer && company_id && APP_ROUTES.EDIT_CUSTOMER.create) {
-          navigate(APP_ROUTES.EDIT_CUSTOMER.create(company_id, focusedCustomer.id));
-        } else if (!focusedCustomer) {
-          showToast('No customer selected');
+        if (focusedSupplier && company_id && APP_ROUTES.EDIT_SUPPLIER.create) {
+          navigate(APP_ROUTES.EDIT_SUPPLIER.create(company_id, focusedSupplier.id));
+        } else if (!focusedSupplier) {
+          showToast('No supplier selected');
         }
       }
     },
     {
       combination: 'Alt+D',
-      label: 'Delete Customer',
+      label: 'Delete Supplier',
       handler: () => {
-        if (focusedCustomer) {
+        if (focusedSupplier) {
           changeShowDeleteDialog(true);
         }
       }
     }
-  ], [focusedCustomer, company_id, navigate, showToast]);
+  ], [focusedSupplier, company_id, navigate, showToast]);
 
   useEffect(() => {
-    registerShortcuts("CustomerListLeft", leftShortcuts);
-    return () => { unregisterShortcuts("CustomerListLeft"); };
+    registerShortcuts("SupplierListLeft", leftShortcuts);
+    return () => { unregisterShortcuts("SupplierListLeft"); };
   }, [registerShortcuts, unregisterShortcuts, leftShortcuts]);
 
   if (isLoading) {
-    return <LoadingPopup message="Loading customers..." />;
+    return <LoadingPopup message="Loading suppliers..." />;
   }
 
   if (isError) {
     return (
       <div className="flex w-full h-full justify-center items-center p-6">
         <Card className="max-w-md w-full mx-auto">
-          <p className="text-sm font-semibold text-zinc-800">Could not load the customers list due to a loading error.</p>
+          <p className="text-sm font-semibold text-zinc-800">Could not load the suppliers list due to a loading error.</p>
           <p className="text-xs text-zinc-500 mt-2">
             <strong>F5</strong>: Retry
           </p>
@@ -104,35 +104,39 @@ export default function CustomerListPage() {
       <div className="erp-panel-main flex-1 overflow-y-auto">
         <ErpTable
           columns={COLUMNS}
-          data={customersList}
-          onRowClick={(customer) => {
-            showToast(`Selected Customer: ${customer.name}`);
+          data={suppliersList}
+          onRowClick={(supplier) => {
+            showToast(`Selected Supplier: ${supplier.name}`);
           }}
           onFocusedRowChanged={handleFocusedRowChanged}
-          searchPlaceholder="Search Customer (Alt+F)"
-          render={(colIndex, customer) => {
+          searchPlaceholder="Search Supplier (Alt+F)"
+          render={(colIndex, supplier) => {
             if (colIndex === 0) {
-              return <span className="font-bold">{customer.name}</span>;
+              return <span className="font-mono text-xs">{supplier.code}</span>;
             }
             if (colIndex === 1) {
-              return <span>{customer.phone || 'N/A'}</span>;
+              return <span className="font-bold">{supplier.name}</span>;
             }
             if (colIndex === 2) {
+              return <span>{supplier.phone || 'N/A'}</span>;
+            }
+            if (colIndex === 3) {
               return (
                 <span className="font-mono font-semibold">
-                  {`₹ ${Number(customer.currentBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
+                  {`₹ ${Number(supplier.outstandingAmount ?? supplier.openingBalance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
                 </span>
               );
             }
             return '';
           }}
-          onFilter={(customer: Customer, query: string) => {
+          onFilter={(supplier: Supplier, query: string) => {
             const q = query.toLowerCase().trim();
             if (!q) return true;
             return (
-              customer.name.toLowerCase().includes(q) ||
-              (customer.phone ? customer.phone.toLowerCase().includes(q) : false) ||
-              (customer.email ? customer.email.toLowerCase().includes(q) : false)
+              (supplier.code ? supplier.code.toLowerCase().includes(q) : false) ||
+              supplier.name.toLowerCase().includes(q) ||
+              (supplier.phone ? supplier.phone.toLowerCase().includes(q) : false) ||
+              (supplier.email ? supplier.email.toLowerCase().includes(q) : false)
             );
           }}
         />
@@ -141,28 +145,28 @@ export default function CustomerListPage() {
       {/* Delete Dialog */}
       {
         isDeletePending 
-        ? <LoadingPopup message={`Deleting ${focusedCustomer?.name}`} />
+        ? <LoadingPopup message={`Deleting ${focusedSupplier?.name}`} />
 
         : showDeleteDialog && 
         <ConfirmationDialog
             onNo={() => changeShowDeleteDialog(false)}
             onYes={() => {
               changeShowDeleteDialog(false);
-              deleteCustomer(focusedCustomer!.id, {
+              deleteSupplier(focusedSupplier!.id, {
                 onSuccess: () => {
-                  setFocusedCustomer(undefined);
+                  setFocusedSupplier(undefined);
                 }
               });
             }}
         >
           <div>
             <p style={{ margin: '0 0 1rem 0' }}>
-              The following customer will be deleted permanently. What do you want to do?
+              The following supplier will be deleted permanently. What do you want to do?
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span className="font-bold">{focusedCustomer?.name}</span>
-              <span>{focusedCustomer?.phone || ''}</span>
-              <span>{focusedCustomer?.email || ''}</span>
+              <span className="font-bold">{focusedSupplier?.name}</span>
+              <span>{focusedSupplier?.phone || ''}</span>
+              <span>{focusedSupplier?.email || ''}</span>
             </div>
           </div>
         </ConfirmationDialog>

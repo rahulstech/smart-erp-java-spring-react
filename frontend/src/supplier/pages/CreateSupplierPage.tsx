@@ -1,33 +1,33 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LoadingPopup from '../../common/components/LoadingPopup';
-import { useCreateCompany } from '../hooks/api.hooks';
-import { CompanyFormData } from '../types/company.types';
+import { useCreateSupplier } from '../hooks/api.hooks';
+import { SupplierFormData } from '../types/supplier.types';
 import { useNotification } from '../../common/components/NotificationHost';
-import CompanyInput from '../components/CompanyInput';
-import { APP_ROUTES } from '../../common/constants';
+import SupplierInput from '../components/SupplierInput';
 import { useScaffoldContext } from '../../common/context/ScaffoldContext';
 
-export default function CreateCompanyPage() {
+export default function CreateSupplierPage() {
+  const { company_id } = useParams<{ company_id: string }>();
   const navigate = useNavigate();
-  const createMutation = useCreateCompany();
+  const createMutation = useCreateSupplier(company_id || '');
   const { showToast } = useNotification();
   const { setTitle, setOnRetry } = useScaffoldContext();
   const [serverErrors, setServerErrors] = useState<Record<string, string> | undefined>(undefined);
 
   useEffect(() => {
-    setTitle("Create Company");
+    setTitle("Create Supplier");
     setOnRetry(undefined);
   }, [setTitle, setOnRetry]);
 
-  const handleSave = useCallback((formData: CompanyFormData) => {
+  const handleSave = useCallback((formData: SupplierFormData) => {
     setServerErrors(undefined);
 
     createMutation.mutate(formData, {
       onSuccess: (data) => {
-        showToast(`Company "${data.name}" created successfully!`);
-        navigate(APP_ROUTES.HOME.path);
+        showToast(`Supplier "${data.name}" created successfully!`);
+        navigate(-1);
       },
       onError: (error: unknown) => {
         if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -36,9 +36,12 @@ export default function CreateCompanyPage() {
             setServerErrors(data.reasons as Record<string, string>);
             showToast('Validation failed. Please check input fields.');
             return;
+          } else if (data && typeof data.message === 'string') {
+            showToast(data.message);
+            return;
           }
         }
-        showToast("Could not save the company due to a saving error.");
+        showToast("Could not save the supplier due to a saving error.");
       }
     });
   }, [createMutation, navigate, showToast]);
@@ -46,9 +49,9 @@ export default function CreateCompanyPage() {
   return (
     <>
       <div className="erp-panel-main flex-1 overflow-y-auto">
-        <CompanyInput onSave={handleSave} serverErrors={serverErrors} />
+        <SupplierInput onSave={handleSave} serverErrors={serverErrors} isEditing={false} />
       </div>
-      {createMutation.isPending && <LoadingPopup message="Creating company..." />}
+      {createMutation.isPending && <LoadingPopup message="Creating supplier..." />}
     </>
   );
 }

@@ -25,3 +25,19 @@ export interface Customer {
   country?: string;
 }
 
+export interface Supplier {
+  id: string;
+  companyId: string;
+  code: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  gstNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  openingBalance?: number;
+  outstandingAmount?: number;
+}

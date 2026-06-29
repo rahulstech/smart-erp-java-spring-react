@@ -66,11 +66,14 @@ export interface ErpInputFieldProps {
   onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
   autoFocus?: boolean;
   type?: string;
   isTextArea?: boolean;
   className?: string;
 }
+
 
 // List Component Types
 export interface ListProps<T> {
@@ -145,4 +148,22 @@ export interface ConfirmationDialogProps {
   children: ReactNode;
   onYes?: ()=> void;
   onNo?: ()=> void;
+}
+
+/**
+ * Props for the RightCommandPanel component.
+ */
+export interface RightCommandPanelProps {
+  /** Optional active company ID used to generate company-scoped navigation routes (e.g., Dashboard, Create Customer, Create Supplier). */
+  companyId?: string;
+  /** Optional custom handler executed when pressing F5 (Reload) or clicking the Reload option. */
+  onReload?: () => void;
+  /** Optional explicit shortcut overrides to display and bind in place of the default standard shortcuts list. */
+  shortcuts?: KeyboardShortcut[];
+  /** 
+   * Unique scope identifier used when registering keyboard shortcuts with the global ShortcutProvider.
+   * This ensures proper scoping, isolation, and unregistering of listeners when switching views or components.
+   * Defaults to 'RightCommandPanel'.
+   */
+  scopeName?: string;
 }

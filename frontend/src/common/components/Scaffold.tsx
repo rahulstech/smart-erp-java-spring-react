@@ -1,26 +1,136 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-   faUser, 
-   faCog
-} from '@fortawesome/free-solid-svg-icons';
-import { KeyboardShortcut, ScaffoldProps } from '../types/component.types';
+import { faUser, faCog } from '@fortawesome/free-solid-svg-icons';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useShortcuts } from '../hooks/useShortcuts';
+import { APP_ROUTES } from '../constants';
+import { useScaffoldContext } from '../context/ScaffoldContext';
+import ShortcutRow from './ShortcutRow';
+import { useNotification } from './NotificationHost';
+import { KeyboardShortcut } from '../types/component.types';
 
-// A static, reference-stable EMPTY_SHORTCUTS array is defined outside the component rather than using
-// an inline default parameter `shortcuts = []`. An inline `[]` creates a new array instance on every single render.
-// Since this array is a dependency in useEffect, a new instance would trigger a shortcut state update, leading
-// to an infinite re-render loop when the prop is omitted.
-const EMPTY_SHORTCUTS: KeyboardShortcut[] = [];
-
-export default function Scaffold({ title, shortcuts = EMPTY_SHORTCUTS, children }: ScaffoldProps) {
+export default function Scaffold() {
+  const navigate = useNavigate();
+  const { company_id } = useParams<{ company_id?: string }>();
+  const { title, onRetry } = useScaffoldContext();
+  const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
-  // Register page shortcuts
+  // Standard right command panel shortcuts embedded directly in Scaffold
+  const rightShortcuts = useMemo<KeyboardShortcut[]>(() => {
+    const shortcuts: KeyboardShortcut[] = [];
+
+    if (company_id) {
+      shortcuts.push(
+        {
+          combination: 'Alt+C',
+          label: 'Create Customer',
+          handler: () => navigate(APP_ROUTES.CREATE_CUSTOMER.create!(company_id))
+        },
+        {
+          combination: 'Alt+S',
+          label: 'Create Supplier',
+          handler: () => navigate(APP_ROUTES.CREATE_SUPPLIER.create!(company_id))
+        },
+        {
+          combination: 'Alt+I',
+          label: 'Add Stock',
+          handler: () => {
+            showToast('Add Stock under construction');
+          }
+        },
+        {
+          combination: 'Alt+P',
+          label: 'Add Purchase Voucher',
+          handler: () => {
+            showToast('Add Purchase Voucher under construction');
+          }
+        },
+        {
+          combination: 'Alt+V',
+          label: 'Add Sell Voucher',
+          handler: () => {
+            showToast('Add Sell Voucher under construction');
+          }
+        }
+      );
+    }
+
+    return shortcuts;
+  }, [company_id, navigate, showToast]);
+
+
+  const footerShortcuts = useMemo(()=>{ 
+    const shortcuts: KeyboardShortcut[] = [
+      {
+        combination: "Esc",
+        label: "Quit",
+        handler: () => {
+          navigate(-1);
+        }
+      },
+      {
+        combination: "F5",
+        label: "Reload",
+        handler: () => {
+          if (onRetry) {
+            onRetry();
+          } else {
+            window.location.reload();
+          }
+        }
+      },
+      {
+        combination: "F6",
+        label: "Companies",
+        handler: () => {
+          navigate(APP_ROUTES.COMPANY_LIST.path);
+        }
+      },
+      
+    ];
+
+
+    if (company_id) {
+      shortcuts.push(
+        {
+          combination: "F7",
+          label: "Dashboard",
+          handler: () => navigate(APP_ROUTES.DASHBOARD.create!(company_id))
+        },
+
+        {
+          combination: 'F8',
+          label: 'Stocks',
+          handler: ()=> {
+            showToast('Shortcut clicked: Stocks')
+          }
+        },
+
+        {
+          combination: 'F9',
+          label: 'Suppliers',
+          handler: ()=> navigate(APP_ROUTES.SUPPLIER_LIST.create!(company_id))
+        }
+      )
+    }
+
+    return shortcuts;
+  },[company_id,navigate,showToast]);
+
+
+
+  // Register global scaffold footer shortcuts & right command panel shortcuts
   useEffect(() => {
-    registerShortcuts('scaffold', shortcuts);
-    return () => unregisterShortcuts('scaffold');
-  }, [shortcuts, registerShortcuts, unregisterShortcuts]);
+    
+    registerShortcuts('scaffold-footer', footerShortcuts);
+    registerShortcuts('scaffold-right', rightShortcuts);
+
+    return () => {
+      unregisterShortcuts('scaffold-footer');
+      unregisterShortcuts('scaffold-right');
+    };
+  }, [registerShortcuts, unregisterShortcuts, onRetry, navigate, company_id, showToast, rightShortcuts]);
 
   return (
     <div className="erp-layout">
@@ -43,12 +153,36 @@ export default function Scaffold({ title, shortcuts = EMPTY_SHORTCUTS, children 
       </header>
 
       {/* Scaffold Body */}
-      <div className="erp-body">
-        {children}
+      <div className="erp-body flex w-full h-full overflow-hidden">
+        <div className="flex-1 overflow-hidden flex flex-row">
+          <Outlet />
+        </div>
+        <aside className="erp-panel-right" style={{ width: '15%', height: '100%' }}>
+          <div className="erp-shortcut-section">
+            <div className="erp-shortcut-list">
+              {rightShortcuts.map((shortcut, index) => (
+                <ShortcutRow
+                  key={`command-${shortcut.combination}-${index}`}
+                  combination={shortcut.combination}
+                  label={shortcut.label}
+                  onClick={shortcut.handler}
+                  variant="dark"
+                />
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
 
       {/* Bottom Status Bar */}
-      <footer className="erp-bottom-bar"></footer>
+      <footer className="erp-bottom-bar">
+        {footerShortcuts.map((shortcut) => (
+          <div key={shortcut.combination} className="flex items-center gap-1 text-xs">
+            <span className="font-bold text-white">{shortcut.combination}</span>
+            <span className="text-zinc-400">: {shortcut.label}</span>
+          </div>
+        ))}
+      </footer>
     </div>
   );
 }

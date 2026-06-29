@@ -14,18 +14,18 @@ import lombok.Setter;
 @Embeddable
 public class Address {
 
-    @Column(nullable = false)
+    @Column
     private String address;
 
-    @Column(nullable = false)
+    @Column
     private String city;
 
-    @Column(nullable = false)
+    @Column
     private String state;
 
-    @Column(nullable = false)
+    @Column
     private String pincode;
 
-    @Column(nullable = false)
+    @Column
     private String country;
 }

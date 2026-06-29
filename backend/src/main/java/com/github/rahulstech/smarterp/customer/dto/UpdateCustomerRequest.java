@@ -14,23 +14,13 @@ public record UpdateCustomerRequest(
         @NotBlank(message = "phone is required")
         String phone,
 
-        @NotBlank(message = "email is required")
         @Email(message = "invalid email format")
         String email,
 
-        @NotBlank(message = "address is required")
         String address,
-
-        @NotBlank(message = "city is required")
         String city,
-
-        @NotBlank(message = "state is required")
         String state,
-
-        @NotBlank(message = "pincode is required")
         String pincode,
-
-        @NotBlank(message = "country is required")
         String country,
 
         @NotNull(message = "openingBalance is required")

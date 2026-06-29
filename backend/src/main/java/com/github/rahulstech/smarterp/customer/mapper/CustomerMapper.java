@@ -54,8 +54,12 @@ public class CustomerMapper {
                 .phone(entity.getPhone())
                 .email(entity.getEmail())
                 .currentBalance(entity.getCurrentBalance())
+                .openingBalance(entity.getOpeningBalance())
+                .address(entity.getAddress() != null ? entity.getAddress().getAddress() : null)
                 .city(entity.getAddress() != null ? entity.getAddress().getCity() : null)
                 .state(entity.getAddress() != null ? entity.getAddress().getState() : null)
+                .pincode(entity.getAddress() != null ? entity.getAddress().getPincode() : null)
+                .country(entity.getAddress() != null ? entity.getAddress().getCountry() : null)
                 .build();
     }
 }

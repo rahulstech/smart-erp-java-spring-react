@@ -27,7 +27,7 @@ public class CustomerEntity extends BaseEntity {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
+    @Column
     private String email;
 
     @Embedded

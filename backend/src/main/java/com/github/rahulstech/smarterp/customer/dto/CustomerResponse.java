@@ -11,6 +11,10 @@ public record CustomerResponse(
         String phone,
         String email,
         BigDecimal currentBalance,
+        BigDecimal openingBalance,
+        String address,
         String city,
-        String state
+        String state,
+        String pincode,
+        String country
 ) {}

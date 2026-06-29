@@ -169,6 +169,39 @@
   color: var(--erp-row-selected-text) !important;
 }
 
+/* List component styling */
+.erp-list-container {
+  border: 1px solid var(--erp-main-border);
+  background-color: var(--erp-main-bg);
+}
+
+.erp-list-item {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--erp-main-border);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--erp-main-text);
+}
+
+.erp-list-item:last-child {
+  border-bottom: none;
+}
+
+.erp-list-item:hover {
+  background-color: #f8fafc;
+}
+
+.erp-list-item.selected {
+  background-color: var(--erp-row-selected-bg) !important;
+  color: var(--erp-row-selected-text) !important;
+  font-weight: bold;
+}
+
+.erp-list-item.selected span,
+.erp-list-item.selected div {
+  color: var(--erp-row-selected-text) !important;
+}
+
 /* Search input exactly matching Tally thick border style */
 .erp-search-box {
   width: 100%;

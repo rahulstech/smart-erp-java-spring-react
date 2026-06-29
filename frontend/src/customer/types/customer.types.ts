@@ -13,4 +13,5 @@ export interface CustomerFormData {
 export interface CustomerInputProps {
   onSave: (data: CustomerFormData) => void;
   initialData?: CustomerFormData;
+  serverErrors?: Record<string, string>;
 }

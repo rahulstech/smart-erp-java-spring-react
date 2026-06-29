@@ -13,4 +13,5 @@ export interface CompanyFormData {
 export interface CompanyInputProps {
   onSave: (data: CompanyFormData) => void;
   initialData?: CompanyFormData;
+  serverErrors?: Record<string, string>;
 }

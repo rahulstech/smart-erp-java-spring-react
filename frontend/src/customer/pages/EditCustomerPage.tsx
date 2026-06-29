@@ -2,73 +2,73 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Scaffold from '../../common/components/Scaffold';
-import CompanyInput from '../components/CompanyInput';
+import CustomerInput from '../components/CustomerInput';
 import LoadingPopup from '../../common/components/LoadingPopup';
 import Card from '../../common/components/Card';
 import ShortcutRow from '../../common/components/ShortcutRow';
-import { useGetCompanyById, useUpdateCompany } from '../hooks/api.hooks';
-import { CompanyFormData } from '../types/company.types';
+import { useGetCustomerById, useUpdateCustomer } from '../hooks/api.hooks';
+import { CustomerFormData } from '../types/customer.types';
 import { useNotification } from '../../common/components/NotificationHost';
-import { Company } from '../../common/types/model.types';
-import { APP_ROUTES } from '../../common/constants';
+import { Customer } from '../../common/types/model.types';
 import { KeyboardShortcut } from '../../common/types/shortcut.types';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
+import { APP_ROUTES } from '@/common/constants';
 
-interface EditCompanyMainProps {
-  company: Company;
-  onSave: (formData: CompanyFormData) => void;
+interface EditCustomerMainProps {
+  customer: Customer;
+  onSave: (formData: CustomerFormData) => void;
   serverErrors?: Record<string, string>;
 }
 
-function EditCompanyMain({
-  company,
+function EditCustomerMain({
+  customer,
   onSave,
   serverErrors
-}: EditCompanyMainProps) {
-  const companyFormData = useMemo<CompanyFormData | undefined>(() => {
-    if (!company) return undefined;
+}: EditCustomerMainProps) {
+  const customerFormData = useMemo<CustomerFormData | undefined>(() => {
+    if (!customer) return undefined;
     return {
-      name: company.name || '',
-      phone: company.phone || '',
-      email: company.email || '',
-      gstNumber: company.gstNumber || '',
-      address: company.address || '',
-      city: company.city || '',
-      state: company.state || '',
-      country: company.country || 'India',
-      pincode: company.pincode || ''
+      name: customer.name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || '',
+      city: customer.city || '',
+      state: customer.state || '',
+      country: customer.country || 'India',
+      pincode: customer.pincode || '',
+      openingBalance: customer.openingBalance ?? 0
     };
-  }, [company]);
+  }, [customer]);
 
   return (
     <>
-      {companyFormData && (
-        <CompanyInput onSave={onSave} initialData={companyFormData} serverErrors={serverErrors} />
+      {customerFormData && (
+        <CustomerInput onSave={onSave} initialData={customerFormData} serverErrors={serverErrors} />
       )}
     </>
   );
 }
 
-export default function EditCompanyPage() {
-  const { company_id } = useParams<{ company_id: string }>();
+export default function EditCustomerPage() {
+  const { company_id, customer_id } = useParams<{ company_id: string; customer_id: string }>();
   const navigate = useNavigate();
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
   const [serverErrors, setServerErrors] = useState<Record<string, string> | undefined>(undefined);
 
-  const { data: company, isLoading, isError, refetch } = useGetCompanyById(company_id || '');
-  const updateMutation = useUpdateCompany();
+  const { data: customer, isLoading, isError, refetch } = useGetCustomerById(company_id || '', customer_id || '');
+  const updateMutation = useUpdateCustomer(company_id || '');
 
-  const handleSave = useCallback((formData: CompanyFormData) => {
+  const handleSave = useCallback((formData: CustomerFormData) => {
     // Clear previous server errors before sending request
     setServerErrors(undefined);
 
     updateMutation.mutate(
-      { id: company_id || '', payload: formData },
+      { customerId: customer_id || '', payload: formData },
       {
         onSuccess: (data) => {
-          showToast(`Company "${data.name}" updated successfully!`);
-          navigate(APP_ROUTES.HOME.path);
+          showToast(`Customer "${data.name}" updated successfully!`);
+          navigate(-1);
         },
         onError: (error: unknown) => {
           // Parse HTTP 400 field validation errors returned by server
@@ -80,33 +80,45 @@ export default function EditCompanyPage() {
               return;
             }
           }
-          showToast("Could not save the company due to a saving error.");
+          showToast("Could not save the customer due to a saving error.");
         }
       }
     );
-  }, [updateMutation, company_id, navigate, showToast]);
+  }, [updateMutation, customer_id, navigate, showToast]);
 
   const pageShortcuts = useMemo<KeyboardShortcut[]>(() => [
+    { 
+      combination: 'F7', 
+      label: 'Dashboard', 
+      handler: () => { 
+        if (company_id && APP_ROUTES.DASHBOARD.create) {
+          navigate(APP_ROUTES.DASHBOARD.create(company_id))  
+        }
+      } 
+    },
+    { combination: 'F5', 
+      label: 'Reload', 
+      handler: () => { refetch(); return true; } 
+    },
     {
       combination: 'Esc',
       label: 'Quit',
       handler: () => {
-        navigate(APP_ROUTES.HOME.path);
+        navigate(-1);
         return true;
       }
-    },
-    { combination: 'F5', label: 'Reload Company', handler: () => { refetch(); return true; } }
+    }
   ], [navigate, refetch]);
 
   useEffect(() => {
-    registerShortcuts("EditCompany", pageShortcuts);
-    return () => { unregisterShortcuts("EditCompany"); };
+    registerShortcuts("EditCustomer", pageShortcuts);
+    return () => { unregisterShortcuts("EditCustomer"); };
   }, [registerShortcuts, unregisterShortcuts, pageShortcuts]);
 
   return (
     <>
       <Scaffold
-        title="Alter Company"
+        title="Edit Customer"
         onRetry={isError ? refetch : undefined}
       >
         <div className="flex w-full h-full overflow-hidden">
@@ -115,19 +127,19 @@ export default function EditCompanyPage() {
             {isError ? (
               <div className="flex w-full h-full justify-center items-center p-6">
                 <Card className="max-w-md w-full mx-auto">
-                  <p className="text-sm font-semibold text-zinc-800">Could not load the company due to a loading error.</p>
+                  <p className="text-sm font-semibold text-zinc-800">Could not load customer details due to a loading error.</p>
                   <p className="text-xs text-zinc-500 mt-2">
                     <strong>F5</strong>: Retry
                   </p>
                 </Card>
               </div>
             ) : (
-              company && <EditCompanyMain company={company} onSave={handleSave} serverErrors={serverErrors} />
+              customer && <EditCustomerMain customer={customer} onSave={handleSave} serverErrors={serverErrors} />
             )}
           </div>
 
           {/* COMMAND PANEL */}
-          <aside className="erp-panel-right" style={{ width: '15%', height: '100%' }}>
+          <aside className="erp-panel-right w-[15%] h-full">
             <div className="erp-shortcut-section">
               <div className="erp-shortcut-list">
                 {pageShortcuts.map((shortcut, index) => (
@@ -144,7 +156,7 @@ export default function EditCompanyPage() {
           </aside>
         </div>
       </Scaffold>
-      {(isLoading || updateMutation.isPending) && <LoadingPopup message={updateMutation.isPending ? "Updating company details..." : "Loading company details..."} />}
+      {(isLoading || updateMutation.isPending) && <LoadingPopup message={updateMutation.isPending ? "Updating customer details..." : "Loading customer details..."} />}
     </>
   );
 }

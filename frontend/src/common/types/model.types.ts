@@ -17,9 +17,11 @@ export interface Customer {
   phone: string;
   email?: string;
   currentBalance: number;
+  openingBalance?: number;
   city?: string;
   state?: string;
   address?: string;
   pincode?: string;
+  country?: string;
 }
 

@@ -33,7 +33,7 @@ const DEFAULT_FORM_DATA: FormState = {
  * Renders the form interface to create or edit a Customer's details.
  * Contains client-side field validation and binds component-level Ctrl+S shortcut.
  */
-export default function CustomerInput({ onSave, initialData }: CustomerInputProps) {
+export default function CustomerInput({ onSave, initialData, serverErrors }: CustomerInputProps) {
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
@@ -55,6 +55,16 @@ export default function CustomerInput({ onSave, initialData }: CustomerInputProp
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+
+  // Syncs server-side field validation errors into form error state.
+  useEffect(() => {
+    if (serverErrors && Object.keys(serverErrors).length > 0) {
+      setErrors(prev => ({
+        ...prev,
+        ...serverErrors
+      }));
+    }
+  }, [serverErrors]);
 
   useEffect(() => {
     if (initialData) {

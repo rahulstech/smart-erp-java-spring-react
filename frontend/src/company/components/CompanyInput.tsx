@@ -22,12 +22,22 @@ const DEFAULT_FORM_DATA: CompanyFormData = {
  * Renders the form interface to create or edit a Company's details.
  * Contains client-side field validation and binds component-level Esc and Ctrl+S shortcuts.
  */
-export default function CompanyInput({ onSave, initialData }: CompanyInputProps) {
+export default function CompanyInput({ onSave, initialData, serverErrors }: CompanyInputProps) {
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
 
   const [formData, setFormData] = useState<CompanyFormData>(initialData || DEFAULT_FORM_DATA);
   const [errors, setErrors] = useState<Partial<Record<keyof CompanyFormData, string>>>({});
+
+  // Syncs server-side field validation errors into form error state.
+  useEffect(() => {
+    if (serverErrors && Object.keys(serverErrors).length > 0) {
+      setErrors(prev => ({
+        ...prev,
+        ...serverErrors
+      }));
+    }
+  }, [serverErrors]);
 
   // Keeps local form state in sync when initial data loads asynchronously
   useEffect(() => {

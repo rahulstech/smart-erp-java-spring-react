@@ -5,8 +5,8 @@ import LoadingPopup from '../../common/components/LoadingPopup';
 import Card from '../../common/components/Card';
 import ShortcutRow from '../../common/components/ShortcutRow';
 import { useGetCompanyById } from '../hooks/api.hooks';
-import { APP_ROUTES, GLOBAL_SHORTCUT_RELOAD } from '../../common/constants';
-import Table from '../../common/components/Table';
+import { APP_ROUTES } from '../../common/constants';
+import List from '../../common/components/List';
 import { useNotification } from '../../common/components/NotificationHost';
 import { KeyboardShortcut } from '../../common/types/component.types';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
@@ -21,11 +21,24 @@ export default function CompanyDashboardPage() {
 
   const pageShortcuts = useMemo<KeyboardShortcut[]>(() => [
     {
-      combination: 'Alt+O',
+      combination: 'F6',
       label: 'Select Company',
       handler: () => {
         navigate(APP_ROUTES.HOME.path);
       }
+    },
+    {
+      combination: 'F7',
+      label: 'Dashboard',
+      handler: () => {
+        if (company_id && APP_ROUTES.DASHBOARD.create) {
+          navigate(APP_ROUTES.DASHBOARD.create(company_id));
+        }
+      }
+    },
+    { combination: 'F5', 
+      label: 'Reload', 
+      handler: () => refetch() 
     },
     {
       combination: 'Alt+C',
@@ -63,8 +76,7 @@ export default function CompanyDashboardPage() {
       handler: () => {
         showToast('Add Sell Voucher under construction');
       }
-    },
-    { combination: 'F5', label: 'Reload Dashboard', handler: () => refetch() }
+    }
   ], [navigate, showToast, refetch]);
 
   useEffect(() => {
@@ -86,49 +98,71 @@ export default function CompanyDashboardPage() {
                 <Card className="max-w-md w-full mx-auto">
                   <p className="text-sm font-semibold text-zinc-800">Could not load the company due to a loading error.</p>
                   <p className="text-xs text-zinc-500 mt-2">
-                    <strong>{GLOBAL_SHORTCUT_RELOAD.combination}</strong>: Retry
+                    <strong>F5</strong>: Retry
                   </p>
                 </Card>
               </div>
             ) : company ? (
-              <div className="p-6 w-full mx-auto">
-                {/* Dashboard top row */}
-                <div className="flex justify-between items-center border-b border-[#cbd5e1] pb-2 mb-6">
-                  <span className="text-xl font-bold text-[#002c66]">
-                    Key Performance Index
-                  </span>
-                  <span className="text-sm font-bold text-[#475569]">
-                    1-Apr-2026 to 31-Mar-2027
-                  </span>
+              <div className="p-6 w-full flex flex-row gap-6 items-start">
+                {/* LEFT SECTION (70%) */}
+                <div className="w-[70%] flex flex-col items-center justify-start">
+                  <div className="w-full max-w-xl flex flex-col items-center">
+                    <div className="flex flex-row items-center justify-between border-b border-[#cbd5e1] pb-2 mb-6 w-full text-center">
+                      <span className="text-xl font-bold">
+                        Key Performance Index
+                      </span>
+                      <span className="text-xs font-bold mt-1">
+                        1-Apr-2026 to 31-Mar-2027
+                      </span>
+                    </div>
+
+                    {/* KPI List */}
+                    <div className="w-full">
+                      <List
+                        data={[
+                          { label: 'Total Sales', value: '₹ 1,52,40,000.00' },
+                          { label: 'Total Purchase', value: '₹ 98,50,000.00' },
+                          { label: 'Outstanding Receivables', value: '₹ 24,15,000.00' },
+                          { label: 'Outstanding Payables', value: '₹ 12,80,000.00' }
+                        ]}
+                        renderItem={(item) => (
+                          <div className="flex justify-between w-full items-center">
+                            <span>{item.label}</span>
+                            <span className="font-mono font-semibold">{item.value}</span>
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* KPI Two-column Table */}
-                <Table
-                  data={[
-                    { label: 'Total Sales', value: '₹ 1,52,40,000.00' },
-                    { label: 'Total Purchase', value: '₹ 98,50,000.00' },
-                    { label: 'Outstanding Receivables', value: '₹ 24,15,000.00' },
-                    { label: 'Outstanding Payables', value: '₹ 12,80,000.00' }
-                  ]}
-                  renderHeaderCell={(header) => (
-                    <span className={header === 'the value' ? 'block text-right font-bold' : 'font-bold'}>
-                      {header}
-                    </span>
-                  )}
-                  renderRowCell={(row, colIndex) => {
-                    if (colIndex === 0) {
-                      return <span>{row.label}</span>;
-                    } else {
-                      return <span className="block text-right font-mono font-semibold">{row.value}</span>;
-                    }
-                  }}
-                />
+                {/* RIGHT SECTION (30%) */}
+                <div className="w-[30%] flex flex-col">
+                  <List<string>
+                    autoFocus
+                    data={[
+                      'Customers',
+                      'Suppliers',
+                      'Inventory',
+                      'Purchase Vouchers',
+                      'Sell Vouchers'
+                    ]}
+                    onItemClicked={(item) => {
+                      if (item === 'Customers' && company_id) {
+                        navigate(APP_ROUTES.CUSTOMER_LIST.create!(company_id));
+                      } else {
+                        showToast(item);
+                      }
+                    }}
+                    onFocusedItemChanged={() => {}}
+                  />
+                </div>
               </div>
             ) : null}
           </div>
 
           {/* COMMAND PANEL */}
-          <aside className="erp-panel-right" style={{ width: '15%', height: '100%' }}>
+          <aside className="erp-panel-right w-[15%] h-full">
             <div className="erp-shortcut-section">
               <div className="erp-shortcut-list">
                 {pageShortcuts.map((shortcut, index) => (

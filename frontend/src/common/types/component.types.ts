@@ -72,15 +72,13 @@ export interface ErpInputFieldProps {
   className?: string;
 }
 
-// Table Component Types
-export interface TableProps<T> {
-  headers?: string[];
-  renderHeaderCell?: (header: string) => ReactNode;
-  renederHeaderCell?: (header: string) => ReactNode;
+// List Component Types
+export interface ListProps<T> {
   data: T[];
-  renderRowCell?: (row: T, colIndex: number) => ReactNode;
-  onRowClicked?: (row: T) => void;
-  selectedIndex?: number;
+  renderItem?: (item: T, index: number) => ReactNode;
+  onItemClicked?: (item: T) => void;
+  onFocusedItemChanged?: (item: T, index: number) => void;
+  autoFocus?: boolean;
 }
 
 // ErpTable Component Types

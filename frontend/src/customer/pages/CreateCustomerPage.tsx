@@ -1,5 +1,6 @@
-import { useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Scaffold from '../../common/components/Scaffold';
 import ShortcutRow from '../../common/components/ShortcutRow';
 import LoadingPopup from '../../common/components/LoadingPopup';
@@ -17,18 +18,27 @@ export default function CreateCustomerPage() {
   const createMutation = useCreateCustomer(company_id || '');
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
+  const [serverErrors, setServerErrors] = useState<Record<string, string> | undefined>(undefined);
 
   const handleSave = useCallback((formData: CustomerFormData) => {
+    // Clear previous server errors before sending request
+    setServerErrors(undefined);
+
     createMutation.mutate(formData, {
       onSuccess: (data) => {
         showToast(`Customer "${data.name}" created successfully!`);
-        if (company_id && APP_ROUTES.DASHBOARD.create) {
-          navigate(APP_ROUTES.DASHBOARD.create(company_id));
-        } else {
-          navigate(APP_ROUTES.HOME.path);
-        }
+        navigate(-1)
       },
-      onError: () => {
+      onError: (error: unknown) => {
+        // Parse HTTP 400 field validation errors returned by server
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          const data = error.response.data;
+          if (data && typeof data.reasons === 'object' && data.reasons !== null) {
+            setServerErrors(data.reasons as Record<string, string>);
+            showToast('Validation failed. Please check input fields.');
+            return;
+          }
+        }
         showToast("Could not save the customer due to a saving error.");
       }
     });
@@ -60,7 +70,7 @@ export default function CreateCustomerPage() {
         <div className="flex w-full h-full overflow-hidden">
           {/* MAIN PANEL */}
           <div className="erp-panel-main flex-1 overflow-y-auto">
-            <CustomerInput onSave={handleSave} />
+            <CustomerInput onSave={handleSave} serverErrors={serverErrors} />
           </div>
 
           {/* COMMAND PANEL */}

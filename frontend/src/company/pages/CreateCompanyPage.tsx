@@ -1,5 +1,6 @@
-import { useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Scaffold from '../../common/components/Scaffold';
 import ShortcutRow from '../../common/components/ShortcutRow';
 import LoadingPopup from '../../common/components/LoadingPopup';
@@ -16,14 +17,27 @@ export default function CreateCompanyPage() {
   const createMutation = useCreateCompany();
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
+  const [serverErrors, setServerErrors] = useState<Record<string, string> | undefined>(undefined);
 
   const handleSave = useCallback((formData: CompanyFormData) => {
+    // Clear previous server errors before sending request
+    setServerErrors(undefined);
+
     createMutation.mutate(formData, {
       onSuccess: (data) => {
         showToast(`Company "${data.name}" created successfully!`);
         navigate(APP_ROUTES.HOME.path);
       },
-      onError: () => {
+      onError: (error: unknown) => {
+        // Parse HTTP 400 field validation errors returned by server
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          const data = error.response.data;
+          if (data && typeof data.reasons === 'object' && data.reasons !== null) {
+            setServerErrors(data.reasons as Record<string, string>);
+            showToast('Validation failed. Please check input fields.');
+            return;
+          }
+        }
         showToast("Could not save the company due to a saving error.");
       }
     });
@@ -51,7 +65,7 @@ export default function CreateCompanyPage() {
         <div className="flex w-full h-full overflow-hidden">
           {/* MAIN PANEL */}
           <div className="erp-panel-main flex-1 overflow-y-auto">
-            <CompanyInput onSave={handleSave} />
+            <CompanyInput onSave={handleSave} serverErrors={serverErrors} />
           </div>
 
           {/* COMMAND PANEL */}

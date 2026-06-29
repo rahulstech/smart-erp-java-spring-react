@@ -14,5 +14,7 @@ public interface CustomerRepository extends JpaRepository<@NonNull CustomerEntit
 
     List<CustomerEntity> findByCompanyId(UUID companyId);
 
+    Optional<CustomerEntity> findByIdAndCompanyId(UUID id, UUID companyId);
+
     List<CustomerEntity> findByCompanyIdAndNameContainingIgnoreCase(UUID companyId, String keyword);
 }

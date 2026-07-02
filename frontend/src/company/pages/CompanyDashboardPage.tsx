@@ -110,6 +110,8 @@ export default function CompanyDashboardPage() {
                       navigate(APP_ROUTES.CUSTOMER_LIST.create!(company_id));
                     } else if (item === 'Suppliers' && company_id) {
                       navigate(APP_ROUTES.SUPPLIER_LIST.create!(company_id));
+                    } else if (item === 'Inventory' && company_id) {
+                      navigate(APP_ROUTES.STOCK_LIST.create!(company_id));
                     } else {
                       showToast(item);
                     }

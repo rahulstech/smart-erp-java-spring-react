@@ -86,7 +86,7 @@ export default function CompanyListPage() {
   return (
     <div className="flex w-full h-full overflow-hidden">
       {/* LEFT PANEL */}
-      <aside className="erp-panel-left w-[15%] h-full">
+      <aside className="erp-panel-left h-full">
         <div className="erp-shortcut-section">
           <div className="erp-shortcut-list">
             {leftShortcuts.map((shortcut, index) => (

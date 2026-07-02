@@ -9,6 +9,10 @@ import CustomerListPage from './customer/pages/CustomerListPage'
 import CreateSupplierPage from './supplier/pages/CreateSupplierPage'
 import EditSupplierPage from './supplier/pages/EditSupplierPage'
 import SupplierListPage from './supplier/pages/SupplierListPage'
+import StockListPage from './inventory/pages/StockListPage'
+import CreateStockPage from './inventory/pages/CreateStockPage'
+import AddCategoryPage from './inventory/pages/AddCategoryPage'
+import AddUnitPage from './inventory/pages/AddUnitPage'
 import NotificationHost from './common/components/NotificationHost'
 import ShortcutProvider from './common/components/ShortcutProvider'
 import Scaffold from './common/components/Scaffold'
@@ -36,6 +40,11 @@ export default function App() {
                 <Route path={APP_ROUTES.CREATE_SUPPLIER.path} element={<CreateSupplierPage />} />
                 <Route path={APP_ROUTES.EDIT_SUPPLIER.path} element={<EditSupplierPage />} />
                 <Route path={APP_ROUTES.SUPPLIER_LIST.path} element={<SupplierListPage />} />
+                <Route path={APP_ROUTES.STOCK_LIST.path} element={<StockListPage />} />
+                <Route path={APP_ROUTES.CREATE_STOCK.path} element={<CreateStockPage />} />
+                <Route path={APP_ROUTES.EDIT_STOCK.path} element={<CreateStockPage />} />
+                <Route path={APP_ROUTES.ADD_CATEGORY.path} element={<AddCategoryPage />} />
+                <Route path={APP_ROUTES.ADD_UNIT.path} element={<AddUnitPage />} />
               </Route>
             </Routes>
           </div>

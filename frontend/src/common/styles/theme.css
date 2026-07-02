@@ -57,18 +57,19 @@
 }
 
 .erp-panel-left {
-  width: 12%;
+  width: 15vw;
   background-color: var(--erp-left-bg);
   color: var(--erp-left-text);
   border-right: 1px solid var(--erp-left-border);
   padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .erp-panel-main {
   flex: 1;
-  min-width: 75%;
+  min-width: 70%;
   display: flex;
   flex-direction: column;
   background-color: var(--erp-main-bg);
@@ -77,7 +78,7 @@
 }
 
 .erp-panel-right {
-  width: 13%;
+  width: 15vw;
   background-color: var(--erp-right-bg);
   color: var(--erp-right-text);
   border-left: 1px solid rgba(0, 0, 0, 0.2);
@@ -86,6 +87,7 @@
   flex-direction: column;
   gap: 0.25rem;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .erp-bottom-bar {

@@ -4,6 +4,7 @@ import { useNotification } from '../../common/components/NotificationHost';
 import ErpInputField from '../../common/components/ErpInputField';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
 import { KeyboardShortcut } from '../../common/types/component.types';
+import { useFormNavigation } from '../../common/hooks/useFormNavigation';
 
 interface FormState {
   code: string;
@@ -40,6 +41,7 @@ const DEFAULT_FORM_DATA: FormState = {
 export default function SupplierInput({ onSave, initialData, serverErrors, isEditing }: SupplierInputProps) {
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
+  useFormNavigation();
 
   const [formData, setFormData] = useState<FormState>(() => {
     if (initialData) {
@@ -156,8 +158,9 @@ export default function SupplierInput({ onSave, initialData, serverErrors, isEdi
   }, [registerShortcuts, unregisterShortcuts, handleSave]);
 
   return (
-    <div className="smarterp-container">
-      <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="smarterp-box">
+    <div className="flex flex-col w-full">
+      <div className="smarterp-container">
+        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="smarterp-box">
         <div className="smarterp-header">
           <span className="smarterp-title">
             {isEditing ? 'Edit Supplier' : 'Create Supplier'}
@@ -295,5 +298,9 @@ export default function SupplierInput({ onSave, initialData, serverErrors, isEdi
         </div>
       </form>
     </div>
-  );
+    <div className="erp-table-legend mt-4 px-4 pb-2">
+      <span className="erp-table-legend-item">Shift + ↑ ↓ ← → Focus Fields</span>
+    </div>
+  </div>
+);
 }

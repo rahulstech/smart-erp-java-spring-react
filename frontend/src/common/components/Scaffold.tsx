@@ -35,9 +35,7 @@ export default function Scaffold() {
         {
           combination: 'Alt+I',
           label: 'Add Stock',
-          handler: () => {
-            showToast('Add Stock under construction');
-          }
+          handler: () => navigate(APP_ROUTES.CREATE_STOCK.create!(company_id))
         },
         {
           combination: 'Alt+P',
@@ -102,9 +100,7 @@ export default function Scaffold() {
         {
           combination: 'F8',
           label: 'Stocks',
-          handler: ()=> {
-            showToast('Shortcut clicked: Stocks')
-          }
+          handler: () => navigate(APP_ROUTES.STOCK_LIST.create!(company_id))
         },
 
         {
@@ -157,7 +153,7 @@ export default function Scaffold() {
         <div className="flex-1 overflow-hidden flex flex-row">
           <Outlet />
         </div>
-        <aside className="erp-panel-right" style={{ width: '15%', height: '100%' }}>
+        <aside className="erp-panel-right">
           <div className="erp-shortcut-section">
             <div className="erp-shortcut-list">
               {rightShortcuts.map((shortcut, index) => (

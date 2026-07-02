@@ -62,6 +62,42 @@ export const APP_ROUTES: Record<string, RouteType> = {
       const companyId = params[0];
       return `/companies/${companyId}/suppliers`;
     }
+  },
+  CREATE_STOCK: {
+    path: '/companies/:company_id/create-stock',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/create-stock`;
+    }
+  },
+  EDIT_STOCK: {
+    path: '/companies/:company_id/stocks/:stock_id/edit',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const stockId = params[1];
+      return `/companies/${companyId}/stocks/${stockId}/edit`;
+    }
+  },
+  STOCK_LIST: {
+    path: '/companies/:company_id/stocks',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/stocks`;
+    }
+  },
+  ADD_CATEGORY: {
+    path: '/companies/:company_id/add-category',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/add-category`;
+    }
+  },
+  ADD_UNIT: {
+    path: '/companies/:company_id/add-unit',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/add-unit`;
+    }
   }
 };
 

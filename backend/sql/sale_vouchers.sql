@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS sale_vouchers (
     customer_id UUID NOT NULL,
     voucher_number VARCHAR(100) NOT NULL,
     voucher_date DATE NOT NULL,
-    customer_name VARCHAR(255),
     grand_total DECIMAL(19, 2) NOT NULL DEFAULT 0.00,
     cancelled BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL,

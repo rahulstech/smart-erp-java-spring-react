@@ -63,13 +63,4 @@ public class PurchaseVoucherController {
         purchaseVoucherService.delete(companyId, voucherId);
         return ResponseEntity.noContent().build();
     }
-
-    @PostMapping("/{voucherId}/items")
-    public ResponseEntity<@NonNull PurchaseVoucherResponse> addItem(
-            @PathVariable("companyId") UUID companyId,
-            @PathVariable("voucherId") UUID voucherId,
-            @Valid @RequestBody PurchaseVoucherItemRequest request) {
-        PurchaseVoucherResponse response = purchaseVoucherService.addItem(companyId, voucherId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 }

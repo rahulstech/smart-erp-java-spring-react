@@ -39,6 +39,4 @@ public class PurchaseVoucherEntity extends BaseEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "remarks")
-    private String remarks;
 }

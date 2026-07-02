@@ -17,7 +17,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name = "sale_voucher_items")
-public class SaleVoucherItem extends BaseEntity {
+public class SaleVoucherItemEntity extends BaseEntity {
 
     @Column(name = "sale_voucher_id", nullable = false)
     private UUID saleVoucherId;
@@ -30,9 +30,6 @@ public class SaleVoucherItem extends BaseEntity {
 
     @Column(name = "hsn_code")
     private String hsnCode;
-
-    @Column(name = "unit_name")
-    private String unitName;
 
     @Column(name = "quantity", nullable = false)
     private BigDecimal quantity = BigDecimal.ZERO;

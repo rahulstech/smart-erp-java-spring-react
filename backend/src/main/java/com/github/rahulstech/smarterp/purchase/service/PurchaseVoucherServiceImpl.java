@@ -5,6 +5,7 @@ import com.github.rahulstech.smarterp.company.model.CompanyEntity;
 import com.github.rahulstech.smarterp.company.repository.CompanyRepository;
 import com.github.rahulstech.smarterp.inventory.model.StockItemEntity;
 import com.github.rahulstech.smarterp.inventory.repository.StockItemRepository;
+import com.github.rahulstech.smarterp.inventory.service.InventoryTransactionService;
 import com.github.rahulstech.smarterp.purchase.dto.*;
 import com.github.rahulstech.smarterp.purchase.mapper.PurchaseVoucherMapper;
 import com.github.rahulstech.smarterp.purchase.model.PurchaseVoucherEntity;
@@ -19,8 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +42,7 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
     private final SupplierRepository supplierRepository;
     private final StockItemRepository stockItemRepository;
     private final PurchaseVoucherMapper purchaseVoucherMapper;
+    private final InventoryTransactionService inventoryTransactionService;
 
     /**
      * Creates a new Purchase Voucher and its associated line items.
@@ -76,6 +82,11 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
         }
         List<PurchaseVoucherItemEntity> savedItems = purchaseVoucherItemRepository.saveAll(itemEntities);
 
+        // Record stock in transactions and update quantities
+        for (PurchaseVoucherItemEntity item : savedItems) {
+            inventoryTransactionService.recordStockIn(companyId, savedVoucher.getId(), "PURCHASE_VOUCHER", item.getStockItemId(), item.getQuantity());
+        }
+
         // Step 6: Map saved aggregate and child entities into response DTO
         List<PurchaseVoucherItemResponse> itemResponses = savedItems.stream()
                 .map(item -> {
@@ -103,7 +114,9 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
 
         voucher.setSupplierId(request.supplierId());
         voucher.setVoucherDate(request.voucherDate());
-        voucher.setRemarks(request.remarks());
+
+        // Load existing child items for comparison before deleting
+        List<PurchaseVoucherItemEntity> oldItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
 
         // Step 2: Remove existing child items from database
         purchaseVoucherItemRepository.deleteByPurchaseVoucherId(voucherId);
@@ -123,6 +136,15 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
         // Step 4: Persist updated aggregate and new child items
         PurchaseVoucherEntity updatedVoucher = purchaseVoucherRepository.save(voucher);
         List<PurchaseVoucherItemEntity> savedItems = purchaseVoucherItemRepository.saveAll(itemEntities);
+
+        // Adjust stock and log STOCK_ADJUSTMENT/STOCK_IN transactions
+        Map<UUID, BigDecimal> oldQuantities = oldItems.stream()
+                .collect(Collectors.toMap(PurchaseVoucherItemEntity::getStockItemId, PurchaseVoucherItemEntity::getQuantity, (a, b) -> a));
+
+        Map<UUID, BigDecimal> newQuantities = request.items().stream()
+                .collect(Collectors.toMap(PurchaseVoucherItemRequest::stockItemId, PurchaseVoucherItemRequest::quantity, (a, b) -> a));
+
+        inventoryTransactionService.adjustStockForUpdate(companyId, voucherId, "PURCHASE_VOUCHER", oldQuantities, newQuantities);
 
         List<PurchaseVoucherItemResponse> itemResponses = savedItems.stream()
                 .map(item -> {
@@ -166,6 +188,13 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
     public void delete(UUID companyId, UUID voucherId) {
         findCompanyOrThrow(companyId);
         PurchaseVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
+        
+        // Reverse stock for existing items of the voucher
+        List<PurchaseVoucherItemEntity> oldItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
+        for (PurchaseVoucherItemEntity item : oldItems) {
+            inventoryTransactionService.recordStockOut(companyId, voucherId, "DELETED_PURCHASE_VOUCHER", item.getStockItemId(), item.getQuantity());
+        }
+        
         purchaseVoucherItemRepository.deleteByPurchaseVoucherId(voucherId);
         purchaseVoucherRepository.delete(voucher);
     }
@@ -181,7 +210,10 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
 
         PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemRequest);
         itemEntity.setPurchaseVoucherId(voucherId);
-        purchaseVoucherItemRepository.save(itemEntity);
+        PurchaseVoucherItemEntity savedItem = purchaseVoucherItemRepository.save(itemEntity);
+
+        // Record stock in transaction and update quantity
+        inventoryTransactionService.recordStockIn(companyId, voucherId, "PURCHASE_VOUCHER", savedItem.getStockItemId(), savedItem.getQuantity());
 
         // Recalculate aggregate total amount across all items
         List<PurchaseVoucherItemEntity> allItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
@@ -268,4 +300,5 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
         }
         return voucherNumber;
     }
+
 }

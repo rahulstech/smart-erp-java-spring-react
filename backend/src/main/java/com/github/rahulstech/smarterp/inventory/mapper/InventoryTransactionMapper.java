@@ -16,16 +16,16 @@ public class InventoryTransactionMapper {
         return val.setScale(2, RoundingMode.HALF_UP);
     }
 
-    public InventoryTransactionResponse toResponse(InventoryTransactionEntity entity) {
+    public InventoryTransactionResponse toResponse(InventoryTransactionEntity entity, String itemName, String itemCode) {
         if (entity == null) {
             return null;
         }
         return InventoryTransactionResponse.builder()
                 .id(entity.getId())
-                .companyId(entity.getCompany() != null ? entity.getCompany().getId() : null)
-                .stockItemId(entity.getStockItem() != null ? entity.getStockItem().getId() : null)
-                .stockItemName(entity.getStockItem() != null ? entity.getStockItem().getItemName() : null)
-                .stockItemCode(entity.getStockItem() != null ? entity.getStockItem().getItemCode() : null)
+                .companyId(entity.getCompanyId())
+                .stockItemId(entity.getStockItemId())
+                .stockItemName(itemName)
+                .stockItemCode(itemCode)
                 .transactionType(entity.getTransactionType())
                 .referenceType(entity.getReferenceType())
                 .referenceId(entity.getReferenceId())

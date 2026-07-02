@@ -21,7 +21,7 @@ import java.util.UUID;
 @Table(name = "sale_vouchers", uniqueConstraints = {
     @UniqueConstraint(name = "uq_sale_vouchers_company_voucher_number", columnNames = {"company_id", "voucher_number"})
 })
-public class SaleVoucher extends BaseEntity {
+public class SaleVoucherEntity extends BaseEntity {
 
     @Column(name = "company_id", nullable = false)
     private UUID companyId;
@@ -34,9 +34,6 @@ public class SaleVoucher extends BaseEntity {
 
     @Column(name = "voucher_date", nullable = false)
     private LocalDate voucherDate;
-
-    @Column(name = "customer_name")
-    private String customerName;
 
     @Column(name = "grand_total", nullable = false)
     private BigDecimal grandTotal = BigDecimal.ZERO;

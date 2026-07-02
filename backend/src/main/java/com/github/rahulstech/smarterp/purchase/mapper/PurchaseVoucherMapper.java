@@ -21,7 +21,6 @@ public class PurchaseVoucherMapper {
         PurchaseVoucherEntity entity = new PurchaseVoucherEntity();
         entity.setSupplierId(request.supplierId());
         entity.setVoucherDate(request.voucherDate());
-        entity.setRemarks(request.remarks());
         return entity;
     }
 
@@ -47,7 +46,6 @@ public class PurchaseVoucherMapper {
                 entity.getSupplierId(),
                 supplierName,
                 entity.getTotalAmount(),
-                entity.getRemarks(),
                 items != null ? items : Collections.emptyList(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()

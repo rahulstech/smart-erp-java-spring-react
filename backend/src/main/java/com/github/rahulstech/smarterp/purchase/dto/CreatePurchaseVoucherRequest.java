@@ -14,9 +14,6 @@ public record CreatePurchaseVoucherRequest(
 
     @NotNull(message = "voucherDate is required")
     LocalDate voucherDate,
-
-    String remarks,
-
     @NotEmpty(message = "items are required")
     @Valid
     List<PurchaseVoucherItemRequest> items

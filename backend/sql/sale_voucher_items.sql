@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS sale_voucher_items (
     stock_item_id UUID NOT NULL,
     item_name VARCHAR(255),
     hsn_code VARCHAR(50),
-    unit_name VARCHAR(50),
     quantity DECIMAL(19, 4) NOT NULL DEFAULT 0.0000,
     rate DECIMAL(19, 2) NOT NULL DEFAULT 0.00,
     line_total DECIMAL(19, 2) NOT NULL DEFAULT 0.00,

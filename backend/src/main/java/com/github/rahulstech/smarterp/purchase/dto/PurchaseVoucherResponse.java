@@ -13,7 +13,6 @@ public record PurchaseVoucherResponse(
     UUID supplierId,
     String supplierName,
     BigDecimal totalAmount,
-    String remarks,
     List<PurchaseVoucherItemResponse> items,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt

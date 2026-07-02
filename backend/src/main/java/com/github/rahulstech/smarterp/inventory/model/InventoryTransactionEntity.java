@@ -1,7 +1,6 @@
 package com.github.rahulstech.smarterp.inventory.model;
 
 import com.github.rahulstech.smarterp.common.model.BaseEntity;
-import com.github.rahulstech.smarterp.company.model.CompanyEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,13 +13,11 @@ import java.util.UUID;
 @Table(name = "inventory_transactions")
 public class InventoryTransactionEntity extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
-    private CompanyEntity company;
+    @Column(name = "company_id", nullable = false)
+    private UUID companyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stock_item_id", nullable = false)
-    private StockItemEntity stockItem;
+    @Column(name = "stock_item_id", nullable = false)
+    private UUID stockItemId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false)

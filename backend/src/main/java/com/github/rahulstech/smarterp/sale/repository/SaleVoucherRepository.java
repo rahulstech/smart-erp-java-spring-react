@@ -1,6 +1,6 @@
 package com.github.rahulstech.smarterp.sale.repository;
 
-import com.github.rahulstech.smarterp.sale.model.SaleVoucher;
+import com.github.rahulstech.smarterp.sale.model.SaleVoucherEntity;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -10,15 +10,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface SaleVoucherRepository extends JpaRepository<@NonNull SaleVoucher, @NonNull UUID> {
+public interface SaleVoucherRepository extends JpaRepository<@NonNull SaleVoucherEntity, @NonNull UUID> {
 
-    List<SaleVoucher> findByCompanyIdOrderByVoucherDateDesc(UUID companyId);
+    List<SaleVoucherEntity> findByCompanyIdOrderByVoucherDateDesc(UUID companyId);
 
-    Optional<SaleVoucher> findByCompanyIdAndId(UUID companyId, UUID id);
+    Optional<SaleVoucherEntity> findByCompanyIdAndId(UUID companyId, UUID id);
 
-    Optional<SaleVoucher> findByIdAndCompanyId(UUID id, UUID companyId);
+    Optional<SaleVoucherEntity> findByIdAndCompanyId(UUID id, UUID companyId);
 
     boolean existsByCompanyIdAndVoucherNumber(UUID companyId, String voucherNumber);
 
-    Optional<SaleVoucher> findTopByCompanyIdOrderByCreatedAtDesc(UUID companyId);
+    Optional<SaleVoucherEntity> findTopByCompanyIdOrderByCreatedAtDesc(UUID companyId);
 }

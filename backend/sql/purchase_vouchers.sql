@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS purchase_vouchers (
     voucher_number VARCHAR(100) NOT NULL,
     voucher_date DATE NOT NULL,
     total_amount DECIMAL(19, 2) NOT NULL,
-    remarks TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT uq_purchase_vouchers_company_voucher_number UNIQUE (company_id, voucher_number),

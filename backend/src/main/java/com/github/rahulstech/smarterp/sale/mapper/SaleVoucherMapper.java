@@ -1,8 +1,8 @@
 package com.github.rahulstech.smarterp.sale.mapper;
 
 import com.github.rahulstech.smarterp.sale.dto.*;
-import com.github.rahulstech.smarterp.sale.model.SaleVoucher;
-import com.github.rahulstech.smarterp.sale.model.SaleVoucherItem;
+import com.github.rahulstech.smarterp.sale.model.SaleVoucherEntity;
+import com.github.rahulstech.smarterp.sale.model.SaleVoucherItemEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -11,28 +11,28 @@ import java.util.List;
 @Component
 public class SaleVoucherMapper {
 
-    public SaleVoucher toEntity(CreateSaleVoucherRequest request) {
+    public SaleVoucherEntity toEntity(CreateSaleVoucherRequest request) {
         if (request == null) {
             return null;
         }
-        SaleVoucher entity = new SaleVoucher();
+        SaleVoucherEntity entity = new SaleVoucherEntity();
         entity.setCustomerId(request.customerId());
         entity.setVoucherDate(request.voucherDate());
         return entity;
     }
 
-    public SaleVoucherItem toItemEntity(SaleVoucherItemRequest request) {
+    public SaleVoucherItemEntity toItemEntity(SaleVoucherItemRequest request) {
         if (request == null) {
             return null;
         }
-        SaleVoucherItem itemEntity = new SaleVoucherItem();
+        SaleVoucherItemEntity itemEntity = new SaleVoucherItemEntity();
         itemEntity.setStockItemId(request.itemId());
         itemEntity.setQuantity(request.quantity());
         itemEntity.setRate(request.rate());
         return itemEntity;
     }
 
-    public SaleVoucherResponse toResponse(SaleVoucher entity, List<SaleVoucherItemResponse> items) {
+    public SaleVoucherResponse toResponse(SaleVoucherEntity entity, String customerName, List<SaleVoucherItemResponse> items) {
         if (entity == null) {
             return null;
         }
@@ -41,14 +41,14 @@ public class SaleVoucherMapper {
                 .voucherNumber(entity.getVoucherNumber())
                 .voucherDate(entity.getVoucherDate())
                 .customerId(entity.getCustomerId())
-                .customerName(entity.getCustomerName())
+                .customerName(customerName)
                 .grandTotal(entity.getGrandTotal())
                 .cancelled(entity.isCancelled())
                 .items(items != null ? items : Collections.emptyList())
                 .build();
     }
 
-    public SaleVoucherItemResponse toItemResponse(SaleVoucherItem entity) {
+    public SaleVoucherItemResponse toItemResponse(SaleVoucherItemEntity entity, String unitName) {
         if (entity == null) {
             return null;
         }
@@ -57,7 +57,7 @@ public class SaleVoucherMapper {
                 .itemId(entity.getStockItemId())
                 .itemName(entity.getItemName())
                 .hsnCode(entity.getHsnCode())
-                .unitName(entity.getUnitName())
+                .unitName(unitName)
                 .quantity(entity.getQuantity())
                 .rate(entity.getRate())
                 .lineTotal(entity.getLineTotal())

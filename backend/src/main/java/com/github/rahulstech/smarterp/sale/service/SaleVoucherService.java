@@ -16,5 +16,11 @@ public interface SaleVoucherService {
 
     void delete(UUID companyId, UUID voucherId);
 
-    SaleVoucherResponse addItem(UUID companyId, UUID voucherId, SaleVoucherItemRequest itemRequest);
+    SaleVoucherResponse createItems(UUID companyId, UUID voucherId, SaleVoucherItemsRequest request);
+
+    SaleVoucherResponse updateItems(UUID companyId, UUID voucherId, SaleVoucherItemsRequest request);
+
+    List<SaleVoucherItemResponse> getItems(UUID companyId, UUID voucherId);
+
+    SaleVoucherItemResponse getItem(UUID companyId, UUID voucherId, UUID itemId);
 }

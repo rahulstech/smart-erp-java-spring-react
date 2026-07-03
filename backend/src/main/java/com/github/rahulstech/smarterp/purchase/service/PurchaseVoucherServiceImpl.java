@@ -45,8 +45,7 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
     private final InventoryTransactionService inventoryTransactionService;
 
     /**
-     * Creates a new Purchase Voucher and its associated line items.
-     * Calculates line item amounts and total voucher amount server-side to ensure financial integrity.
+     * Creates a new Purchase Voucher.
      */
     @Override
     @Transactional
@@ -55,52 +54,20 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
         findCompanyOrThrow(companyId);
         SupplierEntity supplier = findSupplierOrThrow(companyId, request.supplierId());
 
-        validateItemsNotEmpty(request.items());
-
         // Step 2: Initialize voucher aggregate and generate voucher number
         PurchaseVoucherEntity voucher = purchaseVoucherMapper.toEntity(request);
         voucher.setCompanyId(companyId);
         voucher.setVoucherNumber(generateVoucherNumber(companyId));
+        voucher.setTotalAmount(BigDecimal.ZERO);
 
-        // Step 3: Validate stock items and calculate line amounts and voucher total
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        List<PurchaseVoucherItemEntity> itemEntities = new ArrayList<>();
-
-        for (PurchaseVoucherItemRequest itemReq : request.items()) {
-            PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemReq);
-            itemEntities.add(itemEntity);
-            totalAmount = totalAmount.add(itemEntity.getAmount());
-        }
-        voucher.setTotalAmount(totalAmount);
-
-        // Step 4: Save parent voucher aggregate first to obtain generated ID
+        // Step 4: Save parent voucher aggregate
         PurchaseVoucherEntity savedVoucher = purchaseVoucherRepository.save(voucher);
 
-        // Step 5: Associate generated voucher ID with child items and persist them
-        for (PurchaseVoucherItemEntity itemEntity : itemEntities) {
-            itemEntity.setPurchaseVoucherId(savedVoucher.getId());
-        }
-        List<PurchaseVoucherItemEntity> savedItems = purchaseVoucherItemRepository.saveAll(itemEntities);
-
-        // Record stock in transactions and update quantities
-        for (PurchaseVoucherItemEntity item : savedItems) {
-            inventoryTransactionService.recordStockIn(companyId, savedVoucher.getId(), "PURCHASE_VOUCHER", item.getStockItemId(), item.getQuantity());
-        }
-
-        // Step 6: Map saved aggregate and child entities into response DTO
-        List<PurchaseVoucherItemResponse> itemResponses = savedItems.stream()
-                .map(item -> {
-                    StockItemEntity stockItem = stockItemRepository.findById(item.getStockItemId()).orElse(null);
-                    return purchaseVoucherMapper.toItemResponse(item, stockItem != null ? stockItem.getItemName() : null);
-                })
-                .collect(Collectors.toList());
-
-        return purchaseVoucherMapper.toResponse(savedVoucher, supplier.getName(), itemResponses);
+        return purchaseVoucherMapper.toResponse(savedVoucher, supplier.getName(), List.of());
     }
 
     /**
-     * Updates an existing Purchase Voucher.
-     * Replaces existing child items with updated ones and recalculates total amount.
+     * Updates an existing Purchase Voucher (header details only).
      */
     @Override
     @Transactional
@@ -110,50 +77,12 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
         PurchaseVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
         SupplierEntity supplier = findSupplierOrThrow(companyId, request.supplierId());
 
-        validateItemsNotEmpty(request.items());
-
         voucher.setSupplierId(request.supplierId());
         voucher.setVoucherDate(request.voucherDate());
 
-        // Load existing child items for comparison before deleting
-        List<PurchaseVoucherItemEntity> oldItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
-
-        // Step 2: Remove existing child items from database
-        purchaseVoucherItemRepository.deleteByPurchaseVoucherId(voucherId);
-
-        // Step 3: Process new line items and recalculate aggregate total amount
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        List<PurchaseVoucherItemEntity> itemEntities = new ArrayList<>();
-
-        for (PurchaseVoucherItemRequest itemReq : request.items()) {
-            PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemReq);
-            itemEntity.setPurchaseVoucherId(voucherId);
-            itemEntities.add(itemEntity);
-            totalAmount = totalAmount.add(itemEntity.getAmount());
-        }
-        voucher.setTotalAmount(totalAmount);
-
-        // Step 4: Persist updated aggregate and new child items
         PurchaseVoucherEntity updatedVoucher = purchaseVoucherRepository.save(voucher);
-        List<PurchaseVoucherItemEntity> savedItems = purchaseVoucherItemRepository.saveAll(itemEntities);
 
-        // Adjust stock and log STOCK_ADJUSTMENT/STOCK_IN transactions
-        Map<UUID, BigDecimal> oldQuantities = oldItems.stream()
-                .collect(Collectors.toMap(PurchaseVoucherItemEntity::getStockItemId, PurchaseVoucherItemEntity::getQuantity, (a, b) -> a));
-
-        Map<UUID, BigDecimal> newQuantities = request.items().stream()
-                .collect(Collectors.toMap(PurchaseVoucherItemRequest::stockItemId, PurchaseVoucherItemRequest::quantity, (a, b) -> a));
-
-        inventoryTransactionService.adjustStockForUpdate(companyId, voucherId, "PURCHASE_VOUCHER", oldQuantities, newQuantities);
-
-        List<PurchaseVoucherItemResponse> itemResponses = savedItems.stream()
-                .map(item -> {
-                    StockItemEntity stockItem = stockItemRepository.findById(item.getStockItemId()).orElse(null);
-                    return purchaseVoucherMapper.toItemResponse(item, stockItem != null ? stockItem.getItemName() : null);
-                })
-                .collect(Collectors.toList());
-
-        return purchaseVoucherMapper.toResponse(updatedVoucher, supplier.getName(), itemResponses);
+        return mapToResponse(updatedVoucher);
     }
 
     /**
@@ -200,22 +129,31 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
     }
 
     /**
-     * Adds a single line item to an existing Purchase Voucher and recalculates aggregate total.
+     * Creates multiple line items for an existing Purchase Voucher.
      */
     @Override
     @Transactional
-    public PurchaseVoucherResponse addItem(UUID companyId, UUID voucherId, PurchaseVoucherItemRequest itemRequest) {
+    public PurchaseVoucherResponse createItems(UUID companyId, UUID voucherId, PurchaseVoucherItemsRequest request) {
         findCompanyOrThrow(companyId);
         PurchaseVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
 
-        PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemRequest);
-        itemEntity.setPurchaseVoucherId(voucherId);
-        PurchaseVoucherItemEntity savedItem = purchaseVoucherItemRepository.save(itemEntity);
+        validateItemsNotEmpty(request.items());
 
-        // Record stock in transaction and update quantity
-        inventoryTransactionService.recordStockIn(companyId, voucherId, "PURCHASE_VOUCHER", savedItem.getStockItemId(), savedItem.getQuantity());
+        List<PurchaseVoucherItemEntity> itemEntities = new ArrayList<>();
+        for (PurchaseVoucherItemRequest itemReq : request.items()) {
+            PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemReq);
+            itemEntity.setPurchaseVoucherId(voucherId);
+            itemEntities.add(itemEntity);
+        }
 
-        // Recalculate aggregate total amount across all items
+        List<PurchaseVoucherItemEntity> savedItems = purchaseVoucherItemRepository.saveAll(itemEntities);
+
+        // Record stock in transactions and update quantities
+        for (PurchaseVoucherItemEntity item : savedItems) {
+            inventoryTransactionService.recordStockIn(companyId, voucherId, "PURCHASE_VOUCHER", item.getStockItemId(), item.getQuantity());
+        }
+
+        // Recalculate total amount across all items
         List<PurchaseVoucherItemEntity> allItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
         BigDecimal totalAmount = allItems.stream()
                 .map(PurchaseVoucherItemEntity::getAmount)
@@ -224,6 +162,50 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
 
         PurchaseVoucherEntity savedVoucher = purchaseVoucherRepository.save(voucher);
         return mapToResponse(savedVoucher);
+    }
+
+    /**
+     * Replaces and updates line items for an existing Purchase Voucher.
+     */
+    @Override
+    @Transactional
+    public PurchaseVoucherResponse updateItems(UUID companyId, UUID voucherId, PurchaseVoucherItemsRequest request) {
+        findCompanyOrThrow(companyId);
+        PurchaseVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
+
+        validateItemsNotEmpty(request.items());
+
+        // Load existing child items for comparison before deleting
+        List<PurchaseVoucherItemEntity> oldItems = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
+
+        // Remove existing child items from database
+        purchaseVoucherItemRepository.deleteByPurchaseVoucherId(voucherId);
+
+        // Process new line items
+        List<PurchaseVoucherItemEntity> itemEntities = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (PurchaseVoucherItemRequest itemReq : request.items()) {
+            PurchaseVoucherItemEntity itemEntity = buildAndValidateItemEntity(companyId, itemReq);
+            itemEntity.setPurchaseVoucherId(voucherId);
+            itemEntities.add(itemEntity);
+            totalAmount = totalAmount.add(itemEntity.getAmount());
+        }
+        voucher.setTotalAmount(totalAmount);
+
+        // Persist updated aggregate and new child items
+        PurchaseVoucherEntity updatedVoucher = purchaseVoucherRepository.save(voucher);
+        purchaseVoucherItemRepository.saveAll(itemEntities);
+
+        // Adjust stock and log transactions
+        Map<UUID, BigDecimal> oldQuantities = oldItems.stream()
+                .collect(Collectors.toMap(PurchaseVoucherItemEntity::getStockItemId, PurchaseVoucherItemEntity::getQuantity, (a, b) -> a));
+
+        Map<UUID, BigDecimal> newQuantities = request.items().stream()
+                .collect(Collectors.toMap(PurchaseVoucherItemRequest::stockItemId, PurchaseVoucherItemRequest::quantity, (a, b) -> a));
+
+        inventoryTransactionService.adjustStockForUpdate(companyId, voucherId, "PURCHASE_VOUCHER", oldQuantities, newQuantities);
+
+        return mapToResponse(updatedVoucher);
     }
 
     /**
@@ -242,6 +224,38 @@ public class PurchaseVoucherServiceImpl implements PurchaseVoucherService {
                 .collect(Collectors.toList());
 
         return purchaseVoucherMapper.toResponse(voucher, supplierName, itemResponses);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PurchaseVoucherItemResponse> getItems(UUID companyId, UUID voucherId) {
+        findCompanyOrThrow(companyId);
+        findVoucherOrThrow(companyId, voucherId);
+
+        List<PurchaseVoucherItemEntity> itemEntities = purchaseVoucherItemRepository.findByPurchaseVoucherId(voucherId);
+        return itemEntities.stream()
+                .map(item -> {
+                    StockItemEntity stockItem = stockItemRepository.findById(item.getStockItemId()).orElse(null);
+                    return purchaseVoucherMapper.toItemResponse(item, stockItem != null ? stockItem.getItemName() : null);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PurchaseVoucherItemResponse getItem(UUID companyId, UUID voucherId, UUID itemId) {
+        findCompanyOrThrow(companyId);
+        findVoucherOrThrow(companyId, voucherId);
+
+        PurchaseVoucherItemEntity item = purchaseVoucherItemRepository.findById(itemId)
+                .orElseThrow(() -> HttpException.notFound("Purchase voucher item not found"));
+
+        if (!item.getPurchaseVoucherId().equals(voucherId)) {
+            throw HttpException.notFound("Purchase voucher item not found");
+        }
+
+        StockItemEntity stockItem = stockItemRepository.findById(item.getStockItemId()).orElse(null);
+        return purchaseVoucherMapper.toItemResponse(item, stockItem != null ? stockItem.getItemName() : null);
     }
 
     private CompanyEntity findCompanyOrThrow(UUID companyId) {

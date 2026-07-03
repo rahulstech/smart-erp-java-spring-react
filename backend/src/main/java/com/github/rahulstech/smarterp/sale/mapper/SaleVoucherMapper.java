@@ -27,6 +27,7 @@ public class SaleVoucherMapper {
         }
         SaleVoucherItemEntity itemEntity = new SaleVoucherItemEntity();
         itemEntity.setStockItemId(request.itemId());
+        itemEntity.setHsnCode(request.hsnCode());
         itemEntity.setQuantity(request.quantity());
         itemEntity.setRate(request.rate());
         return itemEntity;

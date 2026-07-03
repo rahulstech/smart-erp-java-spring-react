@@ -20,5 +20,11 @@ public interface PurchaseVoucherService {
 
     void delete(UUID companyId, UUID voucherId);
 
-    PurchaseVoucherResponse addItem(UUID companyId, UUID voucherId, PurchaseVoucherItemRequest request);
+    PurchaseVoucherResponse createItems(UUID companyId, UUID voucherId, PurchaseVoucherItemsRequest request);
+
+    PurchaseVoucherResponse updateItems(UUID companyId, UUID voucherId, PurchaseVoucherItemsRequest request);
+
+    List<PurchaseVoucherItemResponse> getItems(UUID companyId, UUID voucherId);
+
+    PurchaseVoucherItemResponse getItem(UUID companyId, UUID voucherId, UUID itemId);
 }

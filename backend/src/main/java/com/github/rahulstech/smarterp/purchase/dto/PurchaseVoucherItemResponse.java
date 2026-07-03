@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record PurchaseVoucherItemResponse(
+    UUID id,
     UUID stockItemId,
     String stockItemName,
     BigDecimal quantity,

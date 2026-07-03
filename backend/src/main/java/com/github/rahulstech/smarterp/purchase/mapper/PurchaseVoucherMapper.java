@@ -57,6 +57,7 @@ public class PurchaseVoucherMapper {
             return null;
         }
         return new PurchaseVoucherItemResponse(
+                entity.getId(),
                 entity.getStockItemId(),
                 stockItemName,
                 entity.getQuantity(),

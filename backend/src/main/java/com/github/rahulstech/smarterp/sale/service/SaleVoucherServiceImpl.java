@@ -51,38 +51,17 @@ public class SaleVoucherServiceImpl implements SaleVoucherService {
         // Step 1: Validate entity existence and company boundaries
         findCompanyOrThrow(companyId);
         CustomerEntity customer = findCustomerOrThrow(companyId, request.customerId());
-        validateItemList(request.items());
 
         // Step 2: Initialize sale voucher entity and generate company-scoped voucher number
         SaleVoucherEntity voucher = saleVoucherMapper.toEntity(request);
         voucher.setCompanyId(companyId);
         voucher.setVoucherNumber(generateVoucherNumber(companyId));
+        voucher.setGrandTotal(BigDecimal.ZERO);
 
-        // Step 3: Process line items and calculate financial totals
-        List<SaleVoucherItemEntity> items = processAndValidateItems(companyId, request.items());
-        calculateVoucherFinancials(voucher, items);
-
-        // Step 4: Persist parent voucher aggregate and associate generated ID with child line items
+        // Step 4: Persist parent voucher aggregate
         SaleVoucherEntity savedVoucher = saleVoucherRepository.save(voucher);
-        for (SaleVoucherItemEntity item : items) {
-            item.setSaleVoucherId(savedVoucher.getId());
-        }
-        List<SaleVoucherItemEntity> savedItems = saleVoucherItemRepository.saveAll(items);
 
-        // Record stock out transactions and update quantities
-        for (SaleVoucherItemEntity item : savedItems) {
-            inventoryTransactionService.recordStockOut(companyId, savedVoucher.getId(), "SALE_VOUCHER", item.getStockItemId(), item.getQuantity());
-        }
-
-        // Step 5: Map persisted entities to response DTO
-        List<SaleVoucherItemResponse> itemResponses = savedItems.stream()
-                .map(item -> {
-                    String unitName = getUnitNameForStockItem(item.getStockItemId());
-                    return saleVoucherMapper.toItemResponse(item, unitName);
-                })
-                .collect(Collectors.toList());
-
-        return saleVoucherMapper.toResponse(savedVoucher, customer.getName(), itemResponses);
+        return saleVoucherMapper.toResponse(savedVoucher, customer.getName(), List.of());
     }
 
     @Override
@@ -92,45 +71,14 @@ public class SaleVoucherServiceImpl implements SaleVoucherService {
         findCompanyOrThrow(companyId);
         SaleVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
         CustomerEntity customer = findCustomerOrThrow(companyId, request.customerId());
-        validateItemList(request.items());
 
         voucher.setCustomerId(request.customerId());
         voucher.setVoucherDate(request.voucherDate());
 
-        // Load existing child items for comparison before deleting
-        List<SaleVoucherItemEntity> oldItems = saleVoucherItemRepository.findBySaleVoucherId(voucherId);
-
-        // Step 2: Remove existing line items for clean recreation
-        saleVoucherItemRepository.deleteBySaleVoucherId(voucherId);
-
-        // Step 3: Process new line items and recalculate aggregate financial totals
-        List<SaleVoucherItemEntity> items = processAndValidateItems(companyId, request.items());
-        for (SaleVoucherItemEntity item : items) {
-            item.setSaleVoucherId(voucherId);
-        }
-        calculateVoucherFinancials(voucher, items);
-
         // Step 4: Persist updated aggregate and return mapped response
         SaleVoucherEntity updatedVoucher = saleVoucherRepository.save(voucher);
-        List<SaleVoucherItemEntity> savedItems = saleVoucherItemRepository.saveAll(items);
 
-        // Adjust stock and log STOCK_ADJUSTMENT/STOCK_OUT transactions
-        Map<UUID, BigDecimal> oldQuantities = oldItems.stream()
-                .collect(Collectors.toMap(SaleVoucherItemEntity::getStockItemId, SaleVoucherItemEntity::getQuantity, (a, b) -> a));
-
-        Map<UUID, BigDecimal> newQuantities = request.items().stream()
-                .collect(Collectors.toMap(SaleVoucherItemRequest::itemId, SaleVoucherItemRequest::quantity, (a, b) -> a));
-
-        inventoryTransactionService.adjustStockForUpdate(companyId, voucherId, "SALE_VOUCHER", oldQuantities, newQuantities);
-
-        List<SaleVoucherItemResponse> itemResponses = savedItems.stream()
-                .map(item -> {
-                    String unitName = getUnitNameForStockItem(item.getStockItemId());
-                    return saleVoucherMapper.toItemResponse(item, unitName);
-                })
-                .collect(Collectors.toList());
-
-        return saleVoucherMapper.toResponse(updatedVoucher, customer.getName(), itemResponses);
+        return mapToResponse(updatedVoucher);
     }
 
     @Override
@@ -169,24 +117,70 @@ public class SaleVoucherServiceImpl implements SaleVoucherService {
 
     @Override
     @Transactional
-    public SaleVoucherResponse addItem(UUID companyId, UUID voucherId, SaleVoucherItemRequest itemRequest) {
+    public SaleVoucherResponse createItems(UUID companyId, UUID voucherId, SaleVoucherItemsRequest request) {
         findCompanyOrThrow(companyId);
         SaleVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
 
-        List<SaleVoucherItemEntity> items = processAndValidateItems(companyId, List.of(itemRequest));
-        SaleVoucherItemEntity itemEntity = items.get(0);
-        itemEntity.setSaleVoucherId(voucherId);
-        SaleVoucherItemEntity savedItem = saleVoucherItemRepository.save(itemEntity);
+        validateItemList(request.items());
 
-        // Record stock out transaction and update quantity
-        inventoryTransactionService.recordStockOut(companyId, voucherId, "SALE_VOUCHER", savedItem.getStockItemId(), savedItem.getQuantity());
+        List<SaleVoucherItemEntity> items = processAndValidateItems(companyId, request.items());
+        for (SaleVoucherItemEntity item : items) {
+            item.setSaleVoucherId(voucherId);
+        }
 
-        // Recalculate aggregate financials across all items
+        List<SaleVoucherItemEntity> savedItems = saleVoucherItemRepository.saveAll(items);
+
+        // Record stock out transactions and update quantities
+        for (SaleVoucherItemEntity item : savedItems) {
+            inventoryTransactionService.recordStockOut(companyId, voucherId, "SALE_VOUCHER", item.getStockItemId(), item.getQuantity());
+        }
+
+        // Recalculate financials across all items
         List<SaleVoucherItemEntity> allItems = saleVoucherItemRepository.findBySaleVoucherId(voucherId);
         calculateVoucherFinancials(voucher, allItems);
+        saleVoucherRepository.save(voucher);
 
-        SaleVoucherEntity savedVoucher = saleVoucherRepository.save(voucher);
-        return mapToResponse(savedVoucher);
+        return mapToResponse(voucher);
+    }
+
+    @Override
+    @Transactional
+    public SaleVoucherResponse updateItems(UUID companyId, UUID voucherId, SaleVoucherItemsRequest request) {
+        findCompanyOrThrow(companyId);
+        SaleVoucherEntity voucher = findVoucherOrThrow(companyId, voucherId);
+
+        validateItemList(request.items());
+
+        // Load existing child items for comparison before deleting
+        List<SaleVoucherItemEntity> oldItems = saleVoucherItemRepository.findBySaleVoucherId(voucherId);
+
+        // Remove existing line items for clean recreation
+        saleVoucherItemRepository.deleteBySaleVoucherId(voucherId);
+
+        // Process new line items
+        List<SaleVoucherItemEntity> items = processAndValidateItems(companyId, request.items());
+        for (SaleVoucherItemEntity item : items) {
+            item.setSaleVoucherId(voucherId);
+        }
+
+        // Persist updated items
+        saleVoucherItemRepository.saveAll(items);
+
+        // Recalculate financials
+        List<SaleVoucherItemEntity> allItems = saleVoucherItemRepository.findBySaleVoucherId(voucherId);
+        calculateVoucherFinancials(voucher, allItems);
+        SaleVoucherEntity updatedVoucher = saleVoucherRepository.save(voucher);
+
+        // Adjust stock and log transactions
+        Map<UUID, BigDecimal> oldQuantities = oldItems.stream()
+                .collect(Collectors.toMap(SaleVoucherItemEntity::getStockItemId, SaleVoucherItemEntity::getQuantity, (a, b) -> a));
+
+        Map<UUID, BigDecimal> newQuantities = request.items().stream()
+                .collect(Collectors.toMap(SaleVoucherItemRequest::itemId, SaleVoucherItemRequest::quantity, (a, b) -> a));
+
+        inventoryTransactionService.adjustStockForUpdate(companyId, voucherId, "SALE_VOUCHER", oldQuantities, newQuantities);
+
+        return mapToResponse(updatedVoucher);
     }
 
     private SaleVoucherResponse mapToResponse(SaleVoucherEntity voucher) {
@@ -199,6 +193,38 @@ public class SaleVoucherServiceImpl implements SaleVoucherService {
                 })
                 .collect(Collectors.toList());
         return saleVoucherMapper.toResponse(voucher, customerName, itemResponses);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SaleVoucherItemResponse> getItems(UUID companyId, UUID voucherId) {
+        findCompanyOrThrow(companyId);
+        findVoucherOrThrow(companyId, voucherId);
+
+        List<SaleVoucherItemEntity> itemEntities = saleVoucherItemRepository.findBySaleVoucherId(voucherId);
+        return itemEntities.stream()
+                .map(item -> {
+                    String unitName = getUnitNameForStockItem(item.getStockItemId());
+                    return saleVoucherMapper.toItemResponse(item, unitName);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SaleVoucherItemResponse getItem(UUID companyId, UUID voucherId, UUID itemId) {
+        findCompanyOrThrow(companyId);
+        findVoucherOrThrow(companyId, voucherId);
+
+        SaleVoucherItemEntity item = saleVoucherItemRepository.findById(itemId)
+                .orElseThrow(() -> HttpException.notFound("Sale voucher item not found"));
+
+        if (!item.getSaleVoucherId().equals(voucherId)) {
+            throw HttpException.notFound("Sale voucher item not found");
+        }
+
+        String unitName = getUnitNameForStockItem(item.getStockItemId());
+        return saleVoucherMapper.toItemResponse(item, unitName);
     }
 
     private String getUnitNameForStockItem(UUID stockItemId) {
@@ -256,7 +282,6 @@ public class SaleVoucherServiceImpl implements SaleVoucherService {
 
             SaleVoucherItemEntity itemEntity = saleVoucherMapper.toItemEntity(itemReq);
             itemEntity.setItemName(stockItem.getItemName());
-            itemEntity.setHsnCode(null);
 
             BigDecimal lineTotal = itemReq.quantity().multiply(itemReq.rate()).setScale(2, RoundingMode.HALF_UP);
             itemEntity.setLineTotal(lineTotal);

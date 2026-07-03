@@ -1,4 +1,4 @@
-import { Category, Unit } from './model.types';
+import { Category, Unit, StockItem } from './model.types';
 
 export interface StockItemFormData {
   categoryId: string;
@@ -33,4 +33,10 @@ export interface UnitFormData {
 export interface UnitInputProps {
   onSave: (data: UnitFormData) => void;
   serverErrors?: Record<string, string>;
+}
+
+export interface StockItemChooserPopupProps {
+  companyId: string;
+  onSelect: (item: StockItem) => void;
+  onClose: () => void;
 }

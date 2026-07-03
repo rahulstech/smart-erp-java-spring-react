@@ -29,10 +29,25 @@ export default function List<T>({
     }
   }, [focusedIndex, data, isFocusable]);
 
+  // Reset focused index when data changes (using a shallow check of items to avoid resetting on simple reference changes)
+  const prevDataRef = useRef<T[]>(data);
+  useEffect(() => {
+    const hasChanged = prevDataRef.current.length !== data.length ||
+                       prevDataRef.current.some((item, index) => item !== data[index]);
+    if (hasChanged) {
+      setFocusedIndex(0);
+      prevDataRef.current = data;
+    }
+  }, [data]);
+
   // Notify parent on focused item change
   useEffect(() => {
-    if (isFocusable && onFocusedItemChanged && data && data.length > 0 && focusedIndex >= 0 && focusedIndex < data.length) {
-      onFocusedItemChanged(data[focusedIndex], focusedIndex);
+    if (isFocusable && onFocusedItemChanged) {
+      if (data && data.length > 0 && focusedIndex >= 0 && focusedIndex < data.length) {
+        onFocusedItemChanged(data[focusedIndex], focusedIndex);
+      } else {
+        onFocusedItemChanged(undefined as any, -1);
+      }
     }
   }, [focusedIndex, data, onFocusedItemChanged, isFocusable]);
 
@@ -42,6 +57,14 @@ export default function List<T>({
 
     if (e.key === 'ArrowUp') {
       e.preventDefault();
+      if (focusedIndex === 0) {
+        const searchInput = document.querySelector('.erp-search-box') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+          return;
+        }
+      }
       setFocusedIndex((prev) => (prev > 0 ? prev - 1 : 0));
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();

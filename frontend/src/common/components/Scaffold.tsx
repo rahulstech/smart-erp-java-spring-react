@@ -40,16 +40,12 @@ export default function Scaffold() {
         {
           combination: 'Alt+P',
           label: 'Add Purchase Voucher',
-          handler: () => {
-            showToast('Add Purchase Voucher under construction');
-          }
+          handler: () => navigate(APP_ROUTES.CREATE_PURCHASE_VOUCHER.create!(company_id))
         },
         {
           combination: 'Alt+V',
           label: 'Add Sell Voucher',
-          handler: () => {
-            showToast('Add Sell Voucher under construction');
-          }
+          handler: () => navigate(APP_ROUTES.CREATE_SALE_VOUCHER.create!(company_id))
         }
       );
     }
@@ -107,6 +103,12 @@ export default function Scaffold() {
           combination: 'F9',
           label: 'Suppliers',
           handler: ()=> navigate(APP_ROUTES.SUPPLIER_LIST.create!(company_id))
+        },
+
+        {
+          combination: 'F10',
+          label: 'Customers',
+          handler: ()=> navigate(APP_ROUTES.CUSTOMER_LIST.create!(company_id))
         }
       )
     }

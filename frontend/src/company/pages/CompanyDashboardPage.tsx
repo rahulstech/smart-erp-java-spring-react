@@ -112,6 +112,10 @@ export default function CompanyDashboardPage() {
                       navigate(APP_ROUTES.SUPPLIER_LIST.create!(company_id));
                     } else if (item === 'Inventory' && company_id) {
                       navigate(APP_ROUTES.STOCK_LIST.create!(company_id));
+                    } else if (item === 'Purchase Vouchers' && company_id) {
+                      navigate(APP_ROUTES.PURCHASE_VOUCHER_LIST.create!(company_id));
+                    } else if (item === 'Sell Vouchers' && company_id) {
+                      navigate(APP_ROUTES.SALE_VOUCHER_LIST.create!(company_id));
                     } else {
                       showToast(item);
                     }

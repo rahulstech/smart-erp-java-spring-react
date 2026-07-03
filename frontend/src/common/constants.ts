@@ -98,6 +98,82 @@ export const APP_ROUTES: Record<string, RouteType> = {
       const companyId = params[0];
       return `/companies/${companyId}/add-unit`;
     }
+  },
+  PURCHASE_VOUCHER_LIST: {
+    path: '/companies/:company_id/purchase-vouchers',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/purchase-vouchers`;
+    }
+  },
+  PURCHASE_VOUCHER_ITEMS_LIST: {
+    path: '/companies/:company_id/purchase-vouchers/:voucher_id/items',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/purchase-vouchers/${voucherId}/items`;
+    }
+  },
+  CREATE_PURCHASE_VOUCHER: {
+    path: '/companies/:company_id/create-purchase-voucher',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/create-purchase-voucher`;
+    }
+  },
+  ADD_PURCHASE_ITEM: {
+    path: '/companies/:company_id/purchase-vouchers/:voucher_id/add-item',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/purchase-vouchers/${voucherId}/add-item`;
+    }
+  },
+  EDIT_PURCHASE_VOUCHER: {
+    path: '/companies/:company_id/purchase-vouchers/:voucher_id/edit',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/purchase-vouchers/${voucherId}/edit`;
+    }
+  },
+  SALE_VOUCHER_LIST: {
+    path: '/companies/:company_id/sale-vouchers',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/sale-vouchers`;
+    }
+  },
+  SALE_VOUCHER_ITEMS_LIST: {
+    path: '/companies/:company_id/sale-vouchers/:voucher_id/items',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/sale-vouchers/${voucherId}/items`;
+    }
+  },
+  CREATE_SALE_VOUCHER: {
+    path: '/companies/:company_id/create-sale-voucher',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      return `/companies/${companyId}/create-sale-voucher`;
+    }
+  },
+  ADD_SALE_ITEM: {
+    path: '/companies/:company_id/sale-vouchers/:voucher_id/add-item',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/sale-vouchers/${voucherId}/add-item`;
+    }
+  },
+  EDIT_SALE_VOUCHER: {
+    path: '/companies/:company_id/sale-vouchers/:voucher_id/edit',
+    create: (...params: any[]) => {
+      const companyId = params[0];
+      const voucherId = params[1];
+      return `/companies/${companyId}/sale-vouchers/${voucherId}/edit`;
+    }
   }
 };
 
@@ -107,5 +183,6 @@ export const GLOBAL_SHORTCUTS = [
   { combination: 'F7', label: 'Dashboard' },
   { combination: 'F8', label: 'Supplier' },
   { combination: 'F9', label: 'Stocks' },
+  { combination: 'F10', label: 'Customers' },
   { combination: 'Esc', label: 'Quit' }
 ];

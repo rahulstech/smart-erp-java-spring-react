@@ -4,7 +4,6 @@ import { useNotification } from '../../common/components/NotificationHost';
 import ErpInputField from '../../common/components/ErpInputField';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
 import { KeyboardShortcut } from '../../common/types/component.types';
-import { useFormNavigation } from '../../common/hooks/useFormNavigation';
 
 interface FormState {
   itemName: string;
@@ -30,7 +29,6 @@ export default function StockInput({
 }: StockInputProps) {
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
-  useFormNavigation();
 
   const [formData, setFormData] = useState<FormState>(() => {
     if (initialData) {
@@ -232,7 +230,7 @@ export default function StockInput({
           </div>
         </div>
 
-        <div className="smarterp-footer">
+        <div className="smarterp-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <button
             type="submit"
             className="smarterp-btn-save"
@@ -241,9 +239,6 @@ export default function StockInput({
           </button>
         </div>
       </form>
-    </div>
-    <div className="erp-table-legend mt-4 px-4 pb-2">
-      <span className="erp-table-legend-item">Shift + ↑ ↓ ← → Focus Fields</span>
     </div>
   </div>
 );

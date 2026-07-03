@@ -72,6 +72,7 @@ export interface ErpInputFieldProps {
   type?: string;
   isTextArea?: boolean;
   className?: string;
+  vertical?: boolean;
 }
 
 

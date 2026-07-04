@@ -18,7 +18,9 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Jackson Databind for JSON serialization
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
     // Spring Data JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // Validation Support

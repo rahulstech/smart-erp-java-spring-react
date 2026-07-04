@@ -1,14 +1,20 @@
 package com.github.rahulstech.smarterp.auth.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.rahulstech.smarterp.common.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,6 +29,8 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -32,16 +40,17 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            CorsConfigurationSource corsConfigurationSource
-    ) {
-        
+            CorsConfigurationSource corsConfigurationSource,
+            AuthenticationEntryPoint authenticationEntryPoint,
+            AccessDeniedHandler accessDeniedHandler
+    ) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
             // using JWT based user authentication
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // science cookie / session based authenticate is not used, therefore csrf is disabled
+            // since cookie / session based authenticate is not used, therefore csrf is disabled
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
@@ -52,12 +61,54 @@ public class SecurityConfiguration {
             // basic or form based authentication is not required therefore replacing it completely with JWTAuthenticationFilter
             .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
+            // Register custom entry point and access denied handlers to return 
+            // structured JSON error responses rather than Spring's default HTML pages.
+            .exceptionHandling(exception -> exception
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler)
+            )
+
             // disable spring security default authentication
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
         ;
 
         return http.build();
+    }
+
+    /**
+     * Handles unauthenticated requests (HTTP 401). 
+     * Since the security filters run before DispatcherServlet, we manually serialize 
+     * the ErrorResponse.SimpleError to the response body.
+     */
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            ErrorResponse.SimpleError error = new ErrorResponse.SimpleError(
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    authException.getMessage()
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(error));
+        };
+    }
+
+    /**
+     * Handles authenticated but unauthorized requests (HTTP 403). 
+     * Manually writes a structured ErrorResponse.SimpleError JSON response.
+     */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            ErrorResponse.SimpleError error = new ErrorResponse.SimpleError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Access Denied"
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(error));
+        };
     }
 
     @Bean

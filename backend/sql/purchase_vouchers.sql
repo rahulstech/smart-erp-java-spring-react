@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS purchase_vouchers (
     updated_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT uq_purchase_vouchers_company_voucher_number UNIQUE (company_id, voucher_number),
     CONSTRAINT fk_purchase_vouchers_company FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    CONSTRAINT fk_purchase_vouchers_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    CONSTRAINT fk_purchase_vouchers_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_purchase_vouchers_company_id ON purchase_vouchers(company_id);

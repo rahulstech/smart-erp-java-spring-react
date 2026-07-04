@@ -18,7 +18,6 @@ import java.util.UUID;
  * REST controller for managing Supplier master records within a company context.
  * Enforces validation and routes commands to SupplierService.
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/companies/{companyId}/suppliers")
 @RequiredArgsConstructor

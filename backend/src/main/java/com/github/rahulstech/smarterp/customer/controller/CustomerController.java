@@ -19,7 +19,6 @@ import java.util.UUID;
  * Returns response payloads directly for standard 200 OK operations,
  * using ResponseEntity wrappers only for custom status codes like 201 or 204.
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/companies/{company_id}/customers")
 @RequiredArgsConstructor

@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS customers (
     opening_balance DECIMAL(19, 2) NOT NULL,
     current_balance DECIMAL(19, 2) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT fk_customers_company_id FOREIGN KEY (company_id) REFERENCES companies(company_id) ON DELETE CASCADE
 );
 
 -- Index on company_id for query optimization

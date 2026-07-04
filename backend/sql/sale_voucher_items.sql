@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS sale_voucher_items (
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT fk_sale_voucher_items_sale_voucher FOREIGN KEY (sale_voucher_id) REFERENCES sale_vouchers(id) ON DELETE CASCADE,
-    CONSTRAINT fk_sale_voucher_items_stock_item FOREIGN KEY (stock_item_id) REFERENCES stock_items(id)
+    CONSTRAINT fk_sale_voucher_items_stock_item FOREIGN KEY (stock_item_id) REFERENCES stock_items(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_sale_voucher_items_sale_voucher_id ON sale_voucher_items(sale_voucher_id);

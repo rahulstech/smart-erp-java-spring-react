@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS purchase_voucher_items (
     unit_price DECIMAL(19, 2) NOT NULL,
     amount DECIMAL(19, 2) NOT NULL,
     CONSTRAINT fk_purchase_voucher_items_voucher FOREIGN KEY (purchase_voucher_id) REFERENCES purchase_vouchers(id) ON DELETE CASCADE,
-    CONSTRAINT fk_purchase_voucher_items_stock_item FOREIGN KEY (stock_item_id) REFERENCES stock_items(id)
+    CONSTRAINT fk_purchase_voucher_items_stock_item FOREIGN KEY (stock_item_id) REFERENCES stock_items(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_purchase_voucher_items_voucher_id ON purchase_voucher_items(purchase_voucher_id);

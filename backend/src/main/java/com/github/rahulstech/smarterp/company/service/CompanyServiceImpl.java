@@ -1,6 +1,5 @@
 package com.github.rahulstech.smarterp.company.service;
 
-import com.github.rahulstech.smarterp.common.provider.CurrentUserProvider;
 import com.github.rahulstech.smarterp.common.model.Address;
 import com.github.rahulstech.smarterp.company.dto.CompanyResponse;
 import com.github.rahulstech.smarterp.company.dto.CreateCompanyRequest;
@@ -27,16 +26,15 @@ public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
-    private final CurrentUserProvider currentUserProvider;
 
     /**
      * Creates a new company owned by the currently authenticated user.
      */
     @Override
     @Transactional
-    public CompanyResponse createCompany(CreateCompanyRequest request) {
+    public CompanyResponse createCompany(String userId, CreateCompanyRequest request) {
         CompanyEntity entity = companyMapper.toEntity(request);
-        entity.setOwnerId(currentUserProvider.getCurrentUserId());
+        entity.setOwnerId(userId);
         CompanyEntity saved = companyRepository.saveAndFlush(entity);
         return companyMapper.toResponse(saved);
     }
@@ -48,8 +46,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     @Transactional
     public CompanyResponse updateCompany(UUID companyId, UpdateCompanyRequest request) {
-        String ownerId = currentUserProvider.getCurrentUserId();
-        CompanyEntity entity = companyRepository.findByIdAndOwnerId(companyId, ownerId)
+        CompanyEntity entity = companyRepository.findById(companyId)
                 .orElseThrow(() -> HttpException.notFound("Company with id " + companyId + " not found"));
 
         entity.setName(request.name());
@@ -76,11 +73,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     @Transactional
     public void deleteCompany(UUID companyId) {
-        String ownerId = currentUserProvider.getCurrentUserId();
-        CompanyEntity entity = companyRepository.findByIdAndOwnerId(companyId, ownerId)
-                .orElseThrow(() -> HttpException.notFound("Company with id " + companyId + " not found"));
-
-        companyRepository.delete(entity);
+        companyRepository.deleteById(companyId);
     }
 
     /**
@@ -89,8 +82,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     @Transactional(readOnly = true)
     public CompanyResponse getCompany(UUID companyId) {
-        String ownerId = currentUserProvider.getCurrentUserId();
-        CompanyEntity entity = companyRepository.findByIdAndOwnerId(companyId, ownerId)
+        CompanyEntity entity = companyRepository.findById(companyId)
                 .orElseThrow(() -> HttpException.notFound("Company with id " + companyId + " not found"));
 
         return companyMapper.toResponse(entity);
@@ -101,8 +93,7 @@ public class CompanyServiceImpl implements CompanyService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<CompanyResponse> getAllCompanies() {
-        String ownerId = currentUserProvider.getCurrentUserId();
+    public List<CompanyResponse> getAllCompanies(String ownerId) {
         List<CompanyEntity> companies = companyRepository.findByOwnerId(ownerId);
         return companies.stream()
                 .map(companyMapper::toResponse)

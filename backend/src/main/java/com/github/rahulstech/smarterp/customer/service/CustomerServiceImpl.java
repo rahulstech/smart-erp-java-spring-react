@@ -2,7 +2,6 @@ package com.github.rahulstech.smarterp.customer.service;
 
 import com.github.rahulstech.smarterp.common.exception.HttpException;
 import com.github.rahulstech.smarterp.common.model.Address;
-import com.github.rahulstech.smarterp.common.provider.CurrentCompanyProvider;
 import com.github.rahulstech.smarterp.customer.dto.CreateCustomerRequest;
 import com.github.rahulstech.smarterp.customer.dto.CustomerResponse;
 import com.github.rahulstech.smarterp.customer.dto.UpdateCustomerRequest;
@@ -27,7 +26,6 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
-    private final CurrentCompanyProvider currentCompanyProvider;
 
     /**
      * Creates a customer linked to the specified company.

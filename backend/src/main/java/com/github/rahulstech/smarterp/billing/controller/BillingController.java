@@ -15,7 +15,6 @@ import java.util.UUID;
 /**
  * Controller exposing REST API endpoints for billing operations.
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/companies/{companyId}/sale-vouchers/{voucherId}/billing")
 @RequiredArgsConstructor

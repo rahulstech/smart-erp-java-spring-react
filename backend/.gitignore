@@ -39,3 +39,4 @@ out/
 ### environment files ###
 .env*
 !.env.example
+cert/*

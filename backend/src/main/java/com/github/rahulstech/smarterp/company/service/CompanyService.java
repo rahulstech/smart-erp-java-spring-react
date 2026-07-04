@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface CompanyService {
 
-    CompanyResponse createCompany(CreateCompanyRequest request);
+    CompanyResponse createCompany(String userId, CreateCompanyRequest request);
 
     CompanyResponse updateCompany(UUID companyId, UpdateCompanyRequest request);
 
@@ -17,5 +17,5 @@ public interface CompanyService {
 
     CompanyResponse getCompany(UUID companyId);
 
-    List<CompanyResponse> getAllCompanies();
+    List<CompanyResponse> getAllCompanies(String ownerId);
 }

@@ -1,6 +1,7 @@
 package com.github.rahulstech.smarterp.company.repository;
 
 import com.github.rahulstech.smarterp.company.model.CompanyEntity;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface CompanyRepository extends JpaRepository<CompanyEntity, UUID> {
+public interface CompanyRepository extends JpaRepository<@NonNull CompanyEntity, @NonNull UUID> {
 
     List<CompanyEntity> findByOwnerId(String ownerId);
 

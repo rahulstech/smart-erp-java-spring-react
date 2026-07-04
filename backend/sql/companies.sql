@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS companies (
     country VARCHAR(100) NOT NULL,
     gst_number VARCHAR(50) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT fk_companies_owner_id FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Index on owner_id for query optimization

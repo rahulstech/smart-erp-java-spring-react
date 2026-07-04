@@ -15,7 +15,6 @@ import java.util.UUID;
 /**
  * REST Controller providing endpoints for managing Sale Vouchers.
  */
-@CrossOrigin
 @RestController
 @RequestMapping("/api/companies/{companyId}/sale-vouchers")
 @RequiredArgsConstructor

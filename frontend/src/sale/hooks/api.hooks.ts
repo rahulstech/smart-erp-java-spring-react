@@ -8,7 +8,8 @@ import {
   createSaleVoucherItems,
   updateSaleVoucherItems,
   getSaleVoucherItems,
-  getSaleVoucherItemById
+  getSaleVoucherItemById,
+  downloadInvoicePdf
 } from '../services/sale.service';
 import {
   CreateSaleVoucherRequest,
@@ -101,5 +102,11 @@ export function useGetSaleVoucherItemById(companyId: string, voucherId: string, 
     queryKey: ['saleVoucherItem', companyId, voucherId, itemId],
     queryFn: () => getSaleVoucherItemById(companyId, voucherId, itemId),
     enabled: !!companyId && !!voucherId && !!itemId
+  });
+}
+
+export function useDownloadInvoicePdf(companyId: string) {
+  return useMutation({
+    mutationFn: (voucherId: string) => downloadInvoicePdf(companyId, voucherId)
   });
 }

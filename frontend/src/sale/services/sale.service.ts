@@ -50,3 +50,10 @@ export const getSaleVoucherItemById = async (companyId: string, voucherId: strin
   const response = await api.get<SaleVoucherItem>(`/companies/${companyId}/sale-vouchers/${voucherId}/items/${itemId}`);
   return response.data;
 };
+
+export const downloadInvoicePdf = async (companyId: string, voucherId: string): Promise<Blob> => {
+  const response = await api.get<Blob>(`/companies/${companyId}/sale-vouchers/${voucherId}/billing/invoice`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};

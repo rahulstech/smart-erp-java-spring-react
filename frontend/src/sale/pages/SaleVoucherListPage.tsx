@@ -8,7 +8,7 @@ import LoadingPopup from '../../common/components/LoadingPopup';
 import Card from '../../common/components/Card';
 import { useNotification } from '../../common/components/NotificationHost';
 import ConfirmationDialog from '../../common/components/ConfirmationDialog';
-import { useGetSaleVouchers, useDeleteSaleVoucher } from '../hooks/api.hooks';
+import { useGetSaleVouchers, useDeleteSaleVoucher, useDownloadInvoicePdf } from '../hooks/api.hooks';
 import { APP_ROUTES } from '../../common/constants';
 import { useShortcuts } from '../../common/hooks/useShortcuts';
 import { useScaffoldContext } from '../../common/context/ScaffoldContext';
@@ -27,6 +27,7 @@ export default function SaleVoucherListPage() {
 
   const { data: vouchersList = [], isLoading, isError, refetch } = useGetSaleVouchers(company_id || '');
   const { mutate: deleteVoucher, isPending: isDeletePending } = useDeleteSaleVoucher(company_id || '');
+  const { mutate: downloadInvoice, isPending: isDownloadPending } = useDownloadInvoicePdf(company_id || '');
 
   useEffect(() => {
     setTitle("Sale Vouchers");
@@ -42,7 +43,33 @@ export default function SaleVoucherListPage() {
       combination: 'Alt+B',
       label: 'Download Invoice',
       handler: () => {
-        // TODO: handle download invoice
+        if (!focusedVoucher || !company_id) {
+          showToast('Error starting invoice download');
+          return;
+        }
+
+        showToast(`Downloading invoice for voucher '${focusedVoucher.voucherNumber}'`);
+
+        downloadInvoice(focusedVoucher.id, {
+          onSuccess: (blob) => {
+            // Programmatically trigger a file download using a temporary object URL.
+            // This approach is preferred over opening the API URL in a new tab because it allows the request
+            // to remain within our Axios/TanStack pipeline (allowing secure headers, mutation state tracking,
+            // and toast feedback) while ensuring the browser prompts a direct download with a custom filename.
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${focusedVoucher.voucherNumber}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            showToast('Download completed');
+          },
+          onError: () => {
+            showToast('Failed to download invoice PDF');
+          }
+        });
       }
     },
     {
@@ -69,7 +96,7 @@ export default function SaleVoucherListPage() {
         }
       }
     }
-  ], [focusedVoucher, company_id, refetch, showToast, navigate]);
+  ], [focusedVoucher, company_id, refetch, showToast, navigate, downloadInvoice]);
 
   useEffect(() => {
     registerShortcuts("SaleListLeft", leftShortcuts);
@@ -153,11 +180,14 @@ export default function SaleVoucherListPage() {
         }
       </div>
 
-      {/* Delete Dialog */}
-      {isDeletePending ? (
+      {/* Action overlays */}
+      {isDeletePending && (
         <LoadingPopup message={`Deleting voucher ${focusedVoucher?.voucherNumber}`} />
-      ) 
-      : showDeleteDialog && (
+      )}
+      {isDownloadPending && (
+        <LoadingPopup message="Generating and downloading invoice..." />
+      )}
+      {!isDeletePending && showDeleteDialog && (
         <ConfirmationDialog
           onNo={() => changeShowDeleteDialog(false)}
           onYes={() => {

@@ -2,6 +2,8 @@ import { RouteType } from './types/component.types';
 
 export const APP_ROUTES: Record<string, RouteType> = {
   HOME: { path: '/' },
+  LOGIN: { path: '/login' },
+  REGISTER: { path: '/register' },
   COMPANY_LIST: { path: '/companies' },
   COMPANY_SELECTION: { path: '/select-company' },
   CREATE_COMPANY: { path: '/create-company' },

@@ -6,7 +6,6 @@ import { useCreateCompany } from '../hooks/api.hooks';
 import { CompanyFormData } from '../types/company.types';
 import { useNotification } from '../../common/components/NotificationHost';
 import CompanyInput from '../components/CompanyInput';
-import { APP_ROUTES } from '../../common/constants';
 import { useScaffoldContext } from '../../common/context/ScaffoldContext';
 
 export default function CreateCompanyPage() {
@@ -27,7 +26,7 @@ export default function CreateCompanyPage() {
     createMutation.mutate(formData, {
       onSuccess: (data) => {
         showToast(`Company "${data.name}" created successfully!`);
-        navigate(APP_ROUTES.HOME.path);
+        navigate(-1);
       },
       onError: (error: unknown) => {
         if (axios.isAxiosError(error) && error.response?.status === 400) {

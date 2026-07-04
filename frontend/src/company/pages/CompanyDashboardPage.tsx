@@ -65,17 +65,18 @@ export default function CompanyDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-row items-center justify-between border-b border-[#cbd5e1] pb-2 mb-6 w-full text-center">
+                  
+
+                  {/* KPI List */}
+                  {/* <div className="flex flex-row items-center justify-between border-b border-[#cbd5e1] pb-2 mb-6 w-full text-center">
                     <span className="text-xl font-bold">
                       Key Performance Index
                     </span>
                     <span className="text-xs font-bold mt-1">
                       1-Apr-2026 to 31-Mar-2027
                     </span>
-                  </div>
-
-                  {/* KPI List */}
-                  <div className="w-full">
+                  </div> */}
+                  {/* <div className="w-full">
                     <List
                       data={[
                         { label: 'Total Sales', value: '₹ 1,52,40,000.00' },
@@ -90,7 +91,7 @@ export default function CompanyDashboardPage() {
                         </div>
                       )}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
 

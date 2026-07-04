@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { APP_ROUTES } from '../constants';
@@ -8,6 +8,8 @@ import { useScaffoldContext } from '../context/ScaffoldContext';
 import ShortcutRow from './ShortcutRow';
 import { useNotification } from './NotificationHost';
 import { KeyboardShortcut } from '../types/component.types';
+import { useAuthUser } from '../hooks/useAuthUser';
+import { useLogOut, useIsLoggedIn } from '@/auth/hooks/api.hooks';
 
 export default function Scaffold() {
   const navigate = useNavigate();
@@ -15,6 +17,15 @@ export default function Scaffold() {
   const { title, onRetry } = useScaffoldContext();
   const { showToast } = useNotification();
   const { registerShortcuts, unregisterShortcuts } = useShortcuts();
+  const { data: authUser } = useAuthUser();
+  const logOut = useLogOut();
+  const isLoggedIn = useIsLoggedIn();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate(APP_ROUTES.LOGIN.path);
+    }
+  }, [isLoggedIn, navigate]);
 
   // Standard right command panel shortcuts embedded directly in Scaffold
   const rightShortcuts = useMemo<KeyboardShortcut[]>(() => {
@@ -80,8 +91,7 @@ export default function Scaffold() {
         handler: () => {
           navigate(APP_ROUTES.COMPANY_LIST.path);
         }
-      },
-      
+      }
     ];
 
 
@@ -113,8 +123,17 @@ export default function Scaffold() {
       )
     }
 
+    shortcuts.push({
+        combination: "Alt+Shift+X",
+        label: "Logout",
+        handler: () => {
+          logOut();
+          navigate(APP_ROUTES.LOGIN.path);
+        }
+      });
+
     return shortcuts;
-  },[company_id,navigate,showToast]);
+  },[company_id,navigate,showToast,onRetry,logOut]);
 
 
 
@@ -142,10 +161,7 @@ export default function Scaffold() {
         <div className="flex items-center gap-6 text-sm text-zinc-300">
           <button className="flex items-center gap-2 hover:text-white transition cursor-pointer">
             <FontAwesomeIcon icon={faUser} className="text-zinc-400" />
-            <span className="font-semibold text-xs tracking-wider uppercase">ADMIN</span>
-          </button>
-          <button className="hover:text-white text-zinc-400 transition cursor-pointer">
-            <FontAwesomeIcon icon={faCog} className="text-sm" />
+            <span className="font-semibold text-xs tracking-wider">{authUser?.displayName || ''}</span>
           </button>
         </div>
       </header>

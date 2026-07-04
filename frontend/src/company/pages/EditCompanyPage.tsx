@@ -8,7 +8,6 @@ import { useGetCompanyById, useUpdateCompany } from '../hooks/api.hooks';
 import { CompanyFormData } from '../types/company.types';
 import { useNotification } from '../../common/components/NotificationHost';
 import { Company } from '../../common/types/model.types';
-import { APP_ROUTES } from '../../common/constants';
 import { useScaffoldContext } from '../../common/context/ScaffoldContext';
 
 interface EditCompanyMainProps {
@@ -69,7 +68,7 @@ export default function EditCompanyPage() {
       {
         onSuccess: (data) => {
           showToast(`Company "${data.name}" updated successfully!`);
-          navigate(APP_ROUTES.HOME.path);
+          navigate(-1);
         },
         onError: (error: unknown) => {
           if (axios.isAxiosError(error) && error.response?.status === 400) {

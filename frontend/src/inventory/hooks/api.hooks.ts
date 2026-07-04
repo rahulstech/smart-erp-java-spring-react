@@ -13,28 +13,39 @@ import {
 } from '../services/inventory.service';
 import { StockItemFormData, CategoryFormData, UnitFormData } from '../types/inventory.types';
 import { StockItem } from '../types/model.types';
+import { useLogOut } from '@/auth/hooks/api.hooks';
+
+const handleApiError = (error: any, logout: () => void) => {
+  if (error.response?.status === 403) {
+    logout();
+  }
+  throw error;
+};
 
 // Stock Item Hooks
 export function useGetStockItems(companyId: string) {
+  const logout = useLogOut();
   return useQuery({
     queryKey: ['stocks', companyId],
-    queryFn: () => getStockItems(companyId),
+    queryFn: () => getStockItems(companyId).catch(err => handleApiError(err, logout)),
     enabled: !!companyId
   });
 }
 
 export function useGetStockItemById(companyId: string, itemId: string) {
+  const logout = useLogOut();
   return useQuery<StockItem>({
     queryKey: ['stock', companyId, itemId],
-    queryFn: () => getStockItemById(companyId, itemId),
+    queryFn: () => getStockItemById(companyId, itemId).catch(err => handleApiError(err, logout)),
     enabled: !!companyId && !!itemId
   });
 }
 
 export function useCreateStockItem(companyId: string) {
   const queryClient = useQueryClient();
+  const logout = useLogOut();
   return useMutation({
-    mutationFn: (payload: StockItemFormData) => createStockItem(companyId, payload),
+    mutationFn: (payload: StockItemFormData) => createStockItem(companyId, payload).catch(err => handleApiError(err, logout)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stocks', companyId] });
     }
@@ -43,9 +54,10 @@ export function useCreateStockItem(companyId: string) {
 
 export function useUpdateStockItem(companyId: string) {
   const queryClient = useQueryClient();
+  const logout = useLogOut();
   return useMutation({
     mutationFn: ({ itemId, payload }: { itemId: string; payload: Omit<StockItemFormData, 'itemCode'> }) =>
-      updateStockItem(companyId, itemId, payload),
+      updateStockItem(companyId, itemId, payload).catch(err => handleApiError(err, logout)),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['stocks', companyId] });
       queryClient.invalidateQueries({ queryKey: ['stock', companyId, data.id] });
@@ -55,8 +67,9 @@ export function useUpdateStockItem(companyId: string) {
 
 export function useDeleteStockItem(companyId: string) {
   const queryClient = useQueryClient();
+  const logout = useLogOut();
   return useMutation({
-    mutationFn: (itemId: string) => deleteStockItem(companyId, itemId),
+    mutationFn: (itemId: string) => deleteStockItem(companyId, itemId).catch(err => handleApiError(err, logout)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stocks', companyId] });
     }
@@ -64,26 +77,29 @@ export function useDeleteStockItem(companyId: string) {
 }
 
 export function useSearchStockItems(companyId: string, keyword: string) {
+  const logout = useLogOut();
   return useQuery({
     queryKey: ['stocks', 'search', companyId, keyword],
-    queryFn: () => searchStockItems(companyId, keyword),
+    queryFn: () => searchStockItems(companyId, keyword).catch(err => handleApiError(err, logout)),
     enabled: !!companyId && keyword.length > 0
   });
 }
 
 // Category Hooks
 export function useGetCategories(companyId: string) {
+  const logout = useLogOut();
   return useQuery({
     queryKey: ['categories', companyId],
-    queryFn: () => getCategories(companyId),
+    queryFn: () => getCategories(companyId).catch(err => handleApiError(err, logout)),
     enabled: !!companyId
   });
 }
 
 export function useCreateCategory(companyId: string) {
   const queryClient = useQueryClient();
+  const logout = useLogOut();
   return useMutation({
-    mutationFn: (payload: CategoryFormData) => createCategory(companyId, payload),
+    mutationFn: (payload: CategoryFormData) => createCategory(companyId, payload).catch(err => handleApiError(err, logout)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', companyId] });
     }
@@ -92,17 +108,19 @@ export function useCreateCategory(companyId: string) {
 
 // Unit Hooks
 export function useGetUnits(companyId: string) {
+  const logout = useLogOut();
   return useQuery({
     queryKey: ['units', companyId],
-    queryFn: () => getUnits(companyId),
+    queryFn: () => getUnits(companyId).catch(err => handleApiError(err, logout)),
     enabled: !!companyId
   });
 }
 
 export function useCreateUnit(companyId: string) {
   const queryClient = useQueryClient();
+  const logout = useLogOut();
   return useMutation({
-    mutationFn: (payload: UnitFormData) => createUnit(companyId, payload),
+    mutationFn: (payload: UnitFormData) => createUnit(companyId, payload).catch(err => handleApiError(err, logout)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['units', companyId] });
     }

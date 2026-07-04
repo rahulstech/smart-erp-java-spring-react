@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import CompanyListPage from './company/pages/CompanyListPage'
 import CreateCompanyPage from './company/pages/CreateCompanyPage'
 import EditCompanyPage from './company/pages/EditCompanyPage'
@@ -28,6 +28,8 @@ import ShortcutProvider from './common/components/ShortcutProvider'
 import Scaffold from './common/components/Scaffold'
 import { ScaffoldProvider } from './common/context/ScaffoldContext'
 import { APP_ROUTES } from './common/constants'
+import LoginPage from './auth/pages/LoginPage'
+import RegisterPage from './auth/pages/RegisterPage'
 
 export default function App() {
   return (
@@ -36,8 +38,12 @@ export default function App() {
         <ScaffoldProvider>
           <div className="min-h-screen bg-white text-black antialiased font-sans">
             <Routes>
+              {/* Auth Routes (no Scaffold) */}
+              <Route path={APP_ROUTES.LOGIN.path} element={<LoginPage />} />
+              <Route path={APP_ROUTES.REGISTER.path} element={<RegisterPage />} />
+              <Route path={APP_ROUTES.HOME.path} element={<Navigate to={APP_ROUTES.LOGIN.path} replace />} />
+
               <Route element={<Scaffold />}>
-                <Route path={APP_ROUTES.HOME.path} element={<CompanyListPage />} />
                 <Route path={APP_ROUTES.COMPANY_LIST.path} element={<CompanyListPage />} />
                 <Route path={APP_ROUTES.COMPANY_SELECTION.path} element={<CompanyListPage />} />
 

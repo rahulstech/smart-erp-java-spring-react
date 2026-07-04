@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authStorage } from '../storages/AuthStorage';
 
 /**
  * Standard Axios instance configured for API communication with the backend.
@@ -10,3 +11,14 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use((config) => {
+  const tokens = authStorage.getToken();
+  if (tokens && tokens.authToken) {
+    config.headers.Authorization = `Bearer ${tokens.authToken}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+

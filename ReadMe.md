@@ -24,6 +24,23 @@ Experience the live application here: [smart-erp-rahulstech.vercel.app](https://
 
 ---
 
+## 📸 Screenshots
+
+Here are some screenshots demonstrating the application's key workflows:
+
+*   **User Login**: The secure authentication gateway for the platform.
+    ![User Login](assets/login.png)
+*   **Company Directory**: A clean dashboard listing all user-managed companies.
+    ![Company Directory](assets/company_list.png)
+*   **Create Company Form**: Intuitive wizard to register a new organization profile.
+    ![Create Company](assets/create_company.png)
+*   **Company Dashboard**: Main operations panel with quick access KPI metrics.
+    ![Company Dashboard](assets/company_dashboard.png)
+*   **Safety Confirmations**: Double-check prompts preventing accidental data deletion.
+    ![Safety Confirmation](assets/confirm_delete_company.png)
+
+---
+
 ## 💻 Tech Stack
 
 ### Backend
@@ -94,7 +111,7 @@ docker ps
 | `DB_SSL` | SSL connection mode (`disable`, `required`, `verify-full`). Set to `disable` for local development. |
 | `DB_CERT_PATH` | Path to the CA certificate file (only required if SSL is enabled). |
 | `AUTH_JWT_SECRET` | A secure 256-bit (32-byte) key for signing and verifying JWT tokens. |
-| `CORS_ALLOWED_ORIGIN` | Allowed origin patterns for cross-resource sharing (e.g., `http://localhost:*`). Maps to `CORS_ALLOWED_ORIGINS` in properties. |
+| `CORS_ALLOWED_ORIGINS` | Allowed origin patterns for cross-resource sharing (e.g., `http://localhost:*`). Maps to `CORS_ALLOWED_ORIGINS` in properties. |
 | `SPRING_PROFILE` | Active Spring profile. Use `dev` for development or `prod` for production. |
 
 #### 🔑 Generating a JWT Secret Key on Linux
